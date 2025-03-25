@@ -7,6 +7,8 @@
 
 namespace db
 {
+namespace table
+{
 typedef std::string value_t;
 typedef std::vector<value_t> row_t;
 typedef std::vector<row_t> table_t;
@@ -18,4 +20,5 @@ public:
 
     row_t* where(std::string condition);
 };
+} // namespace table
 } // namespace db
