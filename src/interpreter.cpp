@@ -2,10 +2,11 @@
 
 void db::interpreter::run(std::string line)
 {
-	auto test1 = db::parser::normalize(line, ' ');
-	std::cout << test1 << "\n";
-	auto test2 = db::parser::split(test1, ' ');
-	for(auto& s : test2)
-		std::cout << s << ", ";
-	std::cout << "\n";
+	std::vector<std::string> tokens = db::parser::tokenize("set(filter(table, number == 69), number, 'nice')");
+	std::cout << "[";
+	for(int i = 0; i < tokens.size() - 1; i++)
+		std::cout << "'" << tokens[i] << "', ";
+	std::cout << "'" << tokens[tokens.size() - 1] << "']\n";
+	for(int i = 0; i < tokens.size(); i++)
+		std::cout << tokens[i].length() << "\n";
 }

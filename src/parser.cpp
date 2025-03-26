@@ -37,3 +37,30 @@ std::vector<std::string> db::parser::split(std::string str, char c)
 	}
 	return res;
 }
+
+std::string db::parser::get_operator(std::string str, int i)
+{
+	std::string res = "";
+	for(auto& it : db::script::operators)
+	{
+		std::string key = it.first;
+		if((i + key.length()) < str.length())
+			if(str.substr(i, key.length()) == key)
+				res = key;
+	}
+	return res;
+}
+
+std::vector<std::string> db::parser::tokenize(std::string str)
+{
+	std::vector<std::string> res = {""};
+
+	for(int i = 0; i < str.size(); i++)
+	{
+		std::string op = db::parser::get_operator(str, i);
+		if(op.length() > 0)
+			res.push_back(op);
+	}
+
+	return res;
+}

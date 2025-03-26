@@ -34,6 +34,9 @@ enum OperationType
     OR,
     AND,
     NOT,
+    FUNC_PARAM_START,
+    FUNC_PARAM_END,
+    FUNC_PARAM_DELIMITER,
 };
 
 extern const std::unordered_map<std::string, OperationType> operators;
