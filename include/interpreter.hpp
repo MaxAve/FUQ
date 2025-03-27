@@ -17,11 +17,16 @@ enum ASTTokenType
 class AST
 {
 public:
+    ASTTokenType type;
     token_t value;
     std::vector<AST> children;
 
-    AST(std::vector<token_t>& tokens);
+    AST(const std::vector<token_t>& tokens);
+
+    void print(int depth=0);
 };
+
+bool is_expression(const std::vector<token_t>& tokens);
 
 void run(std::string line);
 } // namespace interpreter

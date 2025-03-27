@@ -24,7 +24,7 @@ enum OperationType
     MUL,
     DIV,
     POW,
-    SQRT,
+    MOD,
     EQUALS,
     NEQUALS,
     GREATER,
@@ -40,6 +40,8 @@ enum OperationType
 };
 
 extern const std::unordered_map<std::string, OperationType> operators;
+
+extern const std::unordered_map<OperationType, uint8_t> operator_precedence;
 
 // Operand
 typedef struct
