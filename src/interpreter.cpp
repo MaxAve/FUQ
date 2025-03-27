@@ -2,7 +2,8 @@
 
 void db::interpreter::run(std::string line)
 {
-	std::vector<std::string> tokens = db::parser::tokenize("set(filter(table, number == 69 or number == 420), number, 'funi number')");
+	line = db::parser::normalize(line, ' ', true);
+	std::vector<std::string> tokens = db::parser::tokenize(line);
 	for(int i = 0; i < tokens.size(); i++)
 		std::cout << tokens[i] << "\n";
 }

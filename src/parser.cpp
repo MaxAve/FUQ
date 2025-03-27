@@ -35,8 +35,6 @@ std::string db::parser::get_operator(std::string str, int i)
 
 std::vector<std::string> db::parser::tokenize(std::string str)
 {
-	str = db::parser::normalize(str, ' ');
-
 	std::vector<std::string> res = {""};
 
 	for(int i = 0; i < str.size(); i++)
