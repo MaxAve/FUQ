@@ -1,5 +1,12 @@
 #include <parser.hpp>
 
+token_t db::parser::get(std::vector<token_t> tokens, int i)
+{
+	if(i >= tokens.size() || i < 0)
+		return "";
+	return tokens[i];
+}
+
 std::string db::parser::normalize(std::string str, char c, bool ignore_strings)
 {
 	std::string res = "";
@@ -33,13 +40,13 @@ std::string db::parser::get_operator(std::string str, int i)
 	return res;
 }
 
-std::vector<std::string> db::parser::tokenize(std::string str)
+std::vector<token_t> db::parser::tokenize(std::string str)
 {
-	std::vector<std::string> res = {""};
+	std::vector<token_t> res = {""};
 
 	for(int i = 0; i < str.size(); i++)
 	{
-		std::string op = db::parser::get_operator(str, i);
+		token_t op = db::parser::get_operator(str, i);
 		if(op.length() > 0)
 		{
 			if(res[res.size() - 1].length() > 0)
