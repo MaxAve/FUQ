@@ -9,8 +9,6 @@ namespace parser
 {
 std::string normalize(std::string str, char c, bool ignore_strings=false);
 
-std::vector<std::string> split(std::string str, char c);
-
 std::string get_operator(std::string str, int i);
 
 std::vector<std::string> tokenize(std::string str);

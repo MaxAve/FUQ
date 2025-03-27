@@ -23,43 +23,43 @@ std::string db::parser::normalize(std::string str, char c, bool ignore_strings)
 	return res;
 }
 
-std::vector<std::string> db::parser::split(std::string str, char c)
-{
-	std::vector<std::string> res = {""};
-	for(int i = 0; i < str.length(); i++)
-	{
-		if(str[i] == c)
-		{
-			res.push_back("");
-			continue;
-		}
-		res[res.size() - 1] += str[i];
-	}
-	return res;
-}
-
 std::string db::parser::get_operator(std::string str, int i)
 {
 	std::string res = "";
 	for(auto& it : db::script::operators)
-	{
-		std::string key = it.first;
-		if((i + key.length()) < str.length())
-			if(str.substr(i, key.length()) == key)
-				res = key;
-	}
+		if((i + it.first.length()) <= str.length())
+			if(str.substr(i, it.first.length()) == it.first)
+				res = it.first;
 	return res;
 }
 
 std::vector<std::string> db::parser::tokenize(std::string str)
 {
+	str = db::parser::normalize(str, ' ');
+
 	std::vector<std::string> res = {""};
 
 	for(int i = 0; i < str.size(); i++)
 	{
 		std::string op = db::parser::get_operator(str, i);
 		if(op.length() > 0)
-			res.push_back(op);
+		{
+			if(res[res.size() - 1].length() > 0)
+			{
+				res.push_back(op);
+				res.push_back("");
+			}
+			else
+			{
+				res[res.size() - 1] = op;
+				res.push_back("");
+			}
+			i += op.length() - 1;
+			if(str[i + 1] == ' ')
+				i++;
+			continue;
+		}
+		res[res.size() - 1] += str[i];
 	}
 
 	return res;
