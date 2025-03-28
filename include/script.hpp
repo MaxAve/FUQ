@@ -9,11 +9,11 @@ namespace db
 {
 namespace script
 {
-// Operand types
-enum OperandType
+enum TokenType
 {
-    COLUMN,
-    VALUE
+    VALUE,
+    FUNCTION_CALL,
+    EXPRESSION,
 };
 
 // Operation types
@@ -41,20 +41,26 @@ enum OperationType
 
 extern const std::unordered_map<std::string, OperationType> operators;
 
-extern const std::unordered_map<OperationType, uint8_t> operator_precedence;
-
-// Operand
 typedef struct
 {
-    OperandType type;
-    std::string value;
-} Operand;
+    uint8_t precedence;
+    bool double_operand;
+} OPInfo;
 
-// Operation
+extern const std::unordered_map<OperationType, OPInfo> operator_info;
+
+enum FunctionID
+{
+    SET,
+    FILTER,
+};
+
 typedef struct
 {
-    std::vector<Operand> operands;
-    OperationType optype;
-} Operation;
+    FunctionID id;
+    std::vector<TokenType> parameters;
+} FunctionInfo;
+
+extern const std::unordered_map<std::string, FunctionInfo> function_infos;
 } // namespace script
 } // namespace db

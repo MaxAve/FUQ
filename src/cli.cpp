@@ -2,6 +2,8 @@
 
 void db::cli::run()
 {
+	db::interpreter::InterpreterContex ctx;
+
 	while(1)
 	{
 		std::string input;
@@ -11,6 +13,6 @@ void db::cli::run()
 		if(input == "exit")
 			break;
 
-		db::interpreter::run(input);
+		ctx.run(input);
 	}
 }

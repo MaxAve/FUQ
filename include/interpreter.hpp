@@ -7,20 +7,14 @@ namespace db
 {
 namespace interpreter
 {
-enum ASTTokenType
-{
-    VALUE,
-    FUNCTION_CALL,
-    EXPRESSION,
-};
-
 class AST
 {
 public:
-    ASTTokenType type;
+    db::script::TokenType type;
     token_t value;
     std::vector<AST> children;
 
+    AST(std::string val);
     AST(const std::vector<token_t>& tokens);
 
     void print(int depth=0);
@@ -28,6 +22,12 @@ public:
 
 bool is_expression(const std::vector<token_t>& tokens);
 
-void run(std::string line);
+class InterpreterContex
+{
+public:
+    void run_function(const AST& fcall);
+
+    void run(std::string line);
+};
 } // namespace interpreter
 } // namespace db

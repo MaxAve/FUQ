@@ -3,22 +3,23 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
-#include "script.hpp"
+#include <cassert>
+#include <iostream>
+#include <string>
+#include <variant>
+
+typedef std::variant<int64_t, double, std::string> db_value_t;
+typedef std::vector<db_value_t> db_entry_t;
 
 namespace db
 {
 namespace table
 {
-typedef std::string value_t;
-typedef std::vector<value_t> row_t;
-typedef std::vector<row_t> table_t;
-
 class Table
 {
 public:
-    table_t table;
-
-    row_t* where(std::string condition);
+    std::unordered_map<std::string, size_t> col_names;
+    std::unordered_map<std::string, db_entry_t> table;
 };
 } // namespace table
 } // namespace db
