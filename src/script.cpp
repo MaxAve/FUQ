@@ -43,6 +43,9 @@ const std::unordered_map<db::script::OperationType, db::script::OPInfo> db::scri
 };
 
 const std::unordered_map<std::string, db::script::FunctionInfo> db::script::function_infos = {
-	{"set", {db::script::FunctionID::SET, {}}},
-	{"filter", {db::script::FunctionID::FILTER, {}}}
+	{"load", {db::script::FunctionID::LOAD, 2}},
+	{"set", {db::script::FunctionID::SET, 3}},
+	{"filter", {db::script::FunctionID::FILTER, 2}},
+	{"insert", {db::script::FunctionID::INSERT, -1}},
+	{"erase", {db::script::FunctionID::ERASE, 1}},
 };

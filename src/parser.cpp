@@ -7,6 +7,18 @@ token_t db::parser::get(std::vector<token_t> tokens, int i)
 	return tokens[i];
 }
 
+std::string db::parser::filter(std::string str, char c, bool ignore_strings)
+{
+	std::string res = "";
+	for(int i = 0; i < str.length(); i++)
+	{
+		if(str[i] == c)
+			continue;
+		res += str[i];
+	}
+	return res;
+}
+
 std::string db::parser::normalize(std::string str, char c, bool ignore_strings)
 {
 	std::string res = "";

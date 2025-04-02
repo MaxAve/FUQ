@@ -51,14 +51,17 @@ extern const std::unordered_map<OperationType, OPInfo> operator_info;
 
 enum FunctionID
 {
+    LOAD,
     SET,
     FILTER,
+    INSERT,
+    ERASE
 };
 
 typedef struct
 {
     FunctionID id;
-    std::vector<TokenType> parameters;
+    int expect_parameters;
 } FunctionInfo;
 
 extern const std::unordered_map<std::string, FunctionInfo> function_infos;

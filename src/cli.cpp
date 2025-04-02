@@ -2,7 +2,7 @@
 
 void db::cli::run()
 {
-	db::interpreter::InterpreterContex ctx;
+	db::interpreter::Context ctx;
 
 	while(1)
 	{

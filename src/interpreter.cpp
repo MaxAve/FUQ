@@ -121,37 +121,103 @@ bool db::interpreter::is_expression(const std::vector<token_t>& tokens)
 	return false;
 }
 
-void db::interpreter::InterpreterContex::run_function(const db::interpreter::AST &fcall)
+void db::interpreter::Context::load_table(std::string file, std::string newname)
+{
+	if(this->loaded_tables.find(file) != this->loaded_tables.end())
+		delete this->loaded_tables[file];
+	this->loaded_tables[file] = new db::table::Table(file);
+	std::cout << "Loaded table from " << file << " as " << newname << "\n";
+}
+
+void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 {
 	if(db::script::function_infos.find(fcall.value) == db::script::function_infos.end())
 	{
-		std::cout << "ERROR: Function '" << fcall.value << "' does not exist.\n";
+		std::cout << "ERROR: Function '" << fcall.value << "' does not exist. Type 'flist' for a list of function definitions.\n";
 		return;
 	}
-	switch(db::script::function_infos.at(fcall.value).id)
+
+	db::interpreter::FCall fc;
+	fc.fid = db::script::function_infos.at(fcall.value).id;
+	fc.ret = "__fnret" + std::to_string(this->call_stack.size()) + "__";
+
+	// Check for the right amount of parameters and print an error message if the parameters don't match with what is expected
+	if(db::script::function_infos.at(fcall.value).expect_parameters >= 0 && fcall.children.size() != db::script::function_infos.at(fcall.value).expect_parameters)
 	{
+		std::cout << "ERROR: In function '" << fcall.value << "': expected " << (int)db::script::function_infos.at(fcall.value).expect_parameters << " parameters but got " << fcall.children.size() << ".\n";
+		return;
+	}
+
+	// We have to push the fcall since at it may call other functions before evaluating all parameters
+	this->call_stack.push_back(fc);
+
+	// Evaluate parameters (values are added directly, expressions and functions are first evaluated)
+	for(int i = 0; i < fcall.children.size(); i++)
+	{
+		switch(fcall.children[i].type)
+		{
+			case db::script::TokenType::VALUE:
+			{
+				fc.params.push_back(fcall.children[i].value);
+				break;
+			}
+			case db::script::TokenType::FUNCTION_CALL:
+			{
+				db::interpreter::Context::call_function(fcall.children[i]);
+				break;
+			}
+			case db::script::TokenType::EXPRESSION:
+			{
+				break;
+			}
+		}
+	}
+
+	// Corresponding function calls
+	switch(fc.fid)
+	{
+		case db::script::FunctionID::LOAD:
+		{
+			this->load_table(fc.params[0], fc.params[1]);
+			break;
+		}
 		case db::script::FunctionID::FILTER:
 		{
-			std::cout << "call filter\n";
+			std::cout << "call: filter\n";
 			break;
 		}
 		case db::script::FunctionID::SET:
 		{
-			std::cout << "call set\n";
+			std::cout << "call: set\n";
+			break;
+		}
+		case db::script::FunctionID::ERASE:
+		{
+			std::cout << "call: erase\n";
+			break;
+		}
+		case db::script::FunctionID::INSERT:
+		{
+			std::cout << "call: insert\n";
 			break;
 		}
 	}
 }
 
-void db::interpreter::InterpreterContex::run(std::string line)
+void db::interpreter::Context::run(std::string line)
 {
+	if(db::parser::filter(line, ' ') == "flist")
+		std::cout << "load(file: value, name: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
+
 	db::interpreter::AST ast(db::parser::tokenize(db::parser::normalize(line, ' ', true)));
+
+	ast.print();
 
 	switch(ast.type)
 	{
 		case db::script::FUNCTION_CALL:
 		{
-			this->run_function(ast);
+			this->call_function(ast);
 			break;
 		}
 	}

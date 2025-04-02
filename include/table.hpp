@@ -18,6 +18,8 @@ namespace table
 class Table
 {
 public:
+    Table(std::string file);
+
     std::unordered_map<std::string, size_t> col_names;
     std::unordered_map<std::string, db_entry_t> table;
 };
