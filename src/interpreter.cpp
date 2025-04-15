@@ -38,7 +38,7 @@ db::interpreter::AST::AST(const std::vector<token_t>& tokens)
 			toks.push_back(tokens[i]);
 		}
 	}
-	else if(db::interpreter::is_expression(tokens))
+	else if(db::interpreter::is_expression(tokens) && !db::interpreter::is_string(tokens))
 	{
 		/*
 		Expression
@@ -111,6 +111,11 @@ void db::interpreter::AST::print(int depth)
 	}
 }
 
+bool db::interpreter::is_string(const std::vector<token_t>& tokens)
+{
+	return tokens[0][0] == '"' || tokens[0][0] == '\'';
+}
+
 bool db::interpreter::is_expression(const std::vector<token_t>& tokens)
 {
 	if(tokens.size() == 1)
@@ -119,6 +124,14 @@ bool db::interpreter::is_expression(const std::vector<token_t>& tokens)
 		if(db::script::operators.find(tokens[i]) != db::script::operators.end())
 			return true;
 	return false;
+}
+
+db::interpreter::Context::Context()
+{
+	for(int i = 0; i < 256; i++)
+	{
+		this->return_tables[i] = nullptr;
+	}
 }
 
 void db::interpreter::Context::load_table(std::string file, std::string newname)
@@ -139,7 +152,8 @@ void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 
 	db::interpreter::FCall fc;
 	fc.fid = db::script::function_infos.at(fcall.value).id;
-	fc.ret = "__fnret" + std::to_string(this->call_stack.size()) + "__";
+	fc.ret = this->call_stack.size(); // TODO
+	fc.stack_index = this->call_stack.size();
 
 	// Check for the right amount of parameters and print an error message if the parameters don't match with what is expected
 	if(db::script::function_infos.at(fcall.value).expect_parameters >= 0 && fcall.children.size() != db::script::function_infos.at(fcall.value).expect_parameters)
@@ -164,10 +178,12 @@ void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 			case db::script::TokenType::FUNCTION_CALL:
 			{
 				db::interpreter::Context::call_function(fcall.children[i]);
+				// TODO put the return value into params
 				break;
 			}
 			case db::script::TokenType::EXPRESSION:
 			{
+				// TODO evaluate expression
 				break;
 			}
 		}
@@ -178,6 +194,7 @@ void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 	{
 		case db::script::FunctionID::LOAD:
 		{
+			std::cout << "call: load\n";
 			this->load_table(fc.params[0], fc.params[1]);
 			break;
 		}
@@ -202,15 +219,28 @@ void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 			break;
 		}
 	}
+
+	int calls_to_pop = this->call_stack.size() - fc.stack_index;
+	for(int i = 0; i < calls_to_pop; i++)
+		this->call_stack.pop_back();
 }
 
 void db::interpreter::Context::run(std::string line)
 {
 	if(db::parser::filter(line, ' ') == "flist")
-		std::cout << "load(file: value, name: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
+		std::cout << "load(file: value, name: value) -> none\nunload(name: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
 
-	db::interpreter::AST ast(db::parser::tokenize(db::parser::normalize(line, ' ', true)));
+	std::string normalized = db::parser::normalize(line, ' ', true);
+	std::cout << "=== NORMALIZED ===\n" << normalized << "\n";
+	
+	std::vector<std::string> tokens = db::parser::tokenize(normalized);
+	std::cout << "=== TOKENIZER ===\n[";
+	for(int i = 0; i < tokens.size() - 1; i++)
+		std::cout << "'" << tokens[i] << "', ";
+	std::cout << "'" << tokens[tokens.size() - 1] << "']\n";
 
+	db::interpreter::AST ast(tokens);
+	std::cout << "=== AST ===\n";
 	ast.print();
 
 	switch(ast.type)
