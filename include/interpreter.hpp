@@ -23,20 +23,6 @@ public:
     void print(int depth=0);
 };
 
-/*enum VarType
-{
-    INT,
-    FLOAT,
-    STRING,
-    PTR_VEC,
-};
-
-typedef struct
-{
-    VarType dtype;
-    std::variant<int64_t, double, std::string, std::vector<uint64_t>> value;
-} VMemValue;*/
-
 typedef struct
 {
     db::script::FunctionID fid; // Type of function being executed
@@ -49,14 +35,11 @@ class Context
 {
 private:
     std::unordered_map<std::string, db::table::Table*> loaded_tables; // Maps table names to their corresponding table objects
-    db::table::Table* return_tables[256];
     std::vector<FCall> call_stack;
 public:
-	Context();
-    
 	void load_table(std::string file, std::string newname);
 
-    void call_function(const AST& fcall);
+	std::string call_function(const AST& fcall);
 
     void run(std::string line);
 

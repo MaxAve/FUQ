@@ -126,14 +126,6 @@ bool db::interpreter::is_expression(const std::vector<token_t>& tokens)
 	return false;
 }
 
-db::interpreter::Context::Context()
-{
-	for(int i = 0; i < 256; i++)
-	{
-		this->return_tables[i] = nullptr;
-	}
-}
-
 void db::interpreter::Context::load_table(std::string file, std::string newname)
 {
 	if(this->loaded_tables.find(file) != this->loaded_tables.end())
@@ -142,12 +134,12 @@ void db::interpreter::Context::load_table(std::string file, std::string newname)
 	std::cout << "Loaded table from " << file << " as " << newname << "\n";
 }
 
-void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
+std::string db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 {
 	if(db::script::function_infos.find(fcall.value) == db::script::function_infos.end())
 	{
 		std::cout << "ERROR: Function '" << fcall.value << "' does not exist. Type 'flist' for a list of function definitions.\n";
-		return;
+		return "";
 	}
 
 	db::interpreter::FCall fc;
@@ -159,7 +151,7 @@ void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 	if(db::script::function_infos.at(fcall.value).expect_parameters >= 0 && fcall.children.size() != db::script::function_infos.at(fcall.value).expect_parameters)
 	{
 		std::cout << "ERROR: In function '" << fcall.value << "': expected " << (int)db::script::function_infos.at(fcall.value).expect_parameters << " parameters but got " << fcall.children.size() << ".\n";
-		return;
+		return "";
 	}
 
 	// We have to push the fcall since at it may call other functions before evaluating all parameters
@@ -168,6 +160,7 @@ void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 	// Evaluate parameters (values are added directly, expressions and functions are first evaluated)
 	for(int i = 0; i < fcall.children.size(); i++)
 	{
+		// TODO what to do with conditions/expressions?
 		switch(fcall.children[i].type)
 		{
 			case db::script::TokenType::VALUE:
@@ -177,17 +170,26 @@ void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 			}
 			case db::script::TokenType::FUNCTION_CALL:
 			{
-				db::interpreter::Context::call_function(fcall.children[i]);
-				// TODO put the return value into params
+				fc.params.push_back(db::interpreter::Context::call_function(fcall.children[i]));
 				break;
 			}
 			case db::script::TokenType::EXPRESSION:
 			{
-				// TODO evaluate expression
+				fc.params.push_back("EXPRESSION");
 				break;
 			}
 		}
 	}
+	
+	std::cout << "Params: ";
+	for(int i = 0; i < fc.params.size(); i++)
+		std::cout << "[" << fc.params[i] << "] ";
+	std::cout << "\n";
+	
+	// Certain functions will return a sub-table, which acts like an independant table with a specifc name.
+	// If a table is returned, ret is to be set to the name of the new table so that it can be used by higher
+	// function calls.
+	std::string ret = "";
 
 	// Corresponding function calls
 	switch(fc.fid)
@@ -201,6 +203,10 @@ void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 		case db::script::FunctionID::FILTER:
 		{
 			std::cout << "call: filter\n";
+
+			std::string subtable_name = std::string("__fnret") + std::to_string(fc.stack_index) + "__";
+
+			ret = subtable_name;
 			break;
 		}
 		case db::script::FunctionID::SET:
@@ -223,6 +229,8 @@ void db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
 	int calls_to_pop = this->call_stack.size() - fc.stack_index;
 	for(int i = 0; i < calls_to_pop; i++)
 		this->call_stack.pop_back();
+
+	return ret;
 }
 
 void db::interpreter::Context::run(std::string line)
@@ -231,17 +239,17 @@ void db::interpreter::Context::run(std::string line)
 		std::cout << "load(file: value, name: value) -> none\nunload(name: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
 
 	std::string normalized = db::parser::normalize(line, ' ', true);
-	std::cout << "=== NORMALIZED ===\n" << normalized << "\n";
+	//std::cout << "=== NORMALIZED ===\n" << normalized << "\n";
 	
 	std::vector<std::string> tokens = db::parser::tokenize(normalized);
-	std::cout << "=== TOKENIZER ===\n[";
+	/*std::cout << "=== TOKENIZER ===\n[";
 	for(int i = 0; i < tokens.size() - 1; i++)
 		std::cout << "'" << tokens[i] << "', ";
-	std::cout << "'" << tokens[tokens.size() - 1] << "']\n";
+	std::cout << "'" << tokens[tokens.size() - 1] << "']\n";*/
 
 	db::interpreter::AST ast(tokens);
-	std::cout << "=== AST ===\n";
-	ast.print();
+	//std::cout << "=== AST ===\n";
+	//ast.print();
 
 	switch(ast.type)
 	{
