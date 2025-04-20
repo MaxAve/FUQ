@@ -58,6 +58,22 @@ std::vector<token_t> db::parser::tokenize(std::string str)
 
 	for(int i = 0; i < str.size(); i++)
 	{
+		if(str[i] == '\'' || str[i] == '"')
+		{
+			std::string str_token = "\"";
+			for(int j = i + 1; j < str.size(); j++)
+			{
+				if(str[j] == '\'' || str[j] == '"')
+				{
+					i = j;
+					break;
+				}
+				str_token += str[j];
+			}
+			res[res.size() - 1] = str_token + "\"";
+			res.push_back("");
+			continue;
+		}
 		token_t op = db::parser::get_operator(str, i);
 		if(op.length() > 0)
 		{
@@ -78,6 +94,9 @@ std::vector<token_t> db::parser::tokenize(std::string str)
 		}
 		res[res.size() - 1] += str[i];
 	}
+
+	if(res[res.size() - 1].length() == 0)
+		res.pop_back();
 
 	return res;
 }

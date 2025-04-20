@@ -128,10 +128,11 @@ bool db::interpreter::is_expression(const std::vector<token_t>& tokens)
 
 void db::interpreter::Context::load_table(std::string file, std::string newname)
 {
-	if(this->loaded_tables.find(file) != this->loaded_tables.end())
-		delete this->loaded_tables[file];
-	this->loaded_tables[file] = new db::table::Table(file);
-	std::cout << "Loaded table from " << file << " as " << newname << "\n";
+	if(this->loaded_tables.find(newname) != this->loaded_tables.end())
+		delete this->loaded_tables[newname];
+	auto t = new db::table::Table(file);
+	if(t->table.size() > 0)
+		this->loaded_tables[newname] = t;
 }
 
 std::string db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
@@ -180,6 +181,15 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			}
 		}
 	}
+
+	for(int i = 0; i < fc.params.size(); i++)
+	{
+		// Trim away matching quotation marks
+		if((fc.params[i][0] == '"' || fc.params[i][0] == '\'') && fc.params[i][0] == fc.params[i][fc.params[i].length() - 1])
+		{
+			fc.params[i] = fc.params[i].substr(1, fc.params[i].length() - 2);
+		}
+	}
 	
 	std::cout << "Params: ";
 	for(int i = 0; i < fc.params.size(); i++)
@@ -194,10 +204,24 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 	// Corresponding function calls
 	switch(fc.fid)
 	{
+		case db::script::FunctionID::PRINT:
+		{
+			std::cout << "call: print\n";
+			if(this->loaded_tables.find(fc.params[0]) == this->loaded_tables.end())
+				std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Table is not loaded\n";
+			else
+				this->loaded_tables[fc.params[0]]->print();
+			break;
+		}
 		case db::script::FunctionID::LOAD:
 		{
 			std::cout << "call: load\n";
 			this->load_table(fc.params[0], fc.params[1]);
+			break;
+		}
+		case db::script::FunctionID::UNLOAD:
+		{
+			std::cout << "call: unload\n";
 			break;
 		}
 		case db::script::FunctionID::FILTER:
@@ -236,16 +260,16 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 void db::interpreter::Context::run(std::string line)
 {
 	if(db::parser::filter(line, ' ') == "flist")
-		std::cout << "load(file: value, name: value) -> none\nunload(name: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
+		std::cout << "print(name: value) -> none\nload(file: value, name: value) -> none\nunload(name: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
 
 	std::string normalized = db::parser::normalize(line, ' ', true);
 	//std::cout << "=== NORMALIZED ===\n" << normalized << "\n";
 	
 	std::vector<std::string> tokens = db::parser::tokenize(normalized);
-	/*std::cout << "=== TOKENIZER ===\n[";
-	for(int i = 0; i < tokens.size() - 1; i++)
-		std::cout << "'" << tokens[i] << "', ";
-	std::cout << "'" << tokens[tokens.size() - 1] << "']\n";*/
+	//std::cout << "=== TOKENIZER ===\n[";
+	//for(int i = 0; i < tokens.size() - 1; i++)
+	//	std::cout << "'" << tokens[i] << "', ";
+	//std::cout << "'" << tokens[tokens.size() - 1] << "']\n";
 
 	db::interpreter::AST ast(tokens);
 	//std::cout << "=== AST ===\n";
