@@ -128,11 +128,21 @@ bool db::interpreter::is_expression(const std::vector<token_t>& tokens)
 
 void db::interpreter::Context::load_table(std::string file, std::string newname)
 {
-	if(this->loaded_tables.find(newname) != this->loaded_tables.end())
-		delete this->loaded_tables[newname];
+	// TODO subtables
+	if(this->tables.find(newname) != this->tables.end())
+		delete this->tables[newname];
 	auto t = new db::table::Table(file);
 	if(t->table.size() > 0)
-		this->loaded_tables[newname] = t;
+		this->tables[newname] = t;
+}
+
+void db::interpreter::Context::unload_table(std::string name)
+{
+	// TODO subtables
+	if(this->tables.find(name) != this->tables.end())
+		delete this->tables[name];
+	else
+		std::cout << "ERROR: (While trying to delete " << name << ") No table or sub-table loaded\n";
 }
 
 std::string db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
@@ -207,10 +217,26 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		case db::script::FunctionID::PRINT:
 		{
 			std::cout << "call: print\n";
-			if(this->loaded_tables.find(fc.params[0]) == this->loaded_tables.end())
-				std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Table is not loaded\n";
+			if(this->tables.find(fc.params[0]) == this->tables.end())
+			{
+				if(this->subtables.find(fc.params[0]) == this->subtables.end())
+				{
+					std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Table or sub-table is not loaded\n";
+				}
+				else
+				{
+					this->subtables[fc.params[0]]->print();
+				}
+			}
 			else
-				this->loaded_tables[fc.params[0]]->print();
+			{
+				this->tables[fc.params[0]]->print();
+			}
+			break;
+		}
+		case db::script::FunctionID::PRINTS:
+		{
+			std::cout << fc.params[0] << "\n";
 			break;
 		}
 		case db::script::FunctionID::LOAD:
@@ -222,15 +248,37 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		case db::script::FunctionID::UNLOAD:
 		{
 			std::cout << "call: unload\n";
+			this->unload_table(fc.params[0]);
 			break;
 		}
 		case db::script::FunctionID::FILTER:
 		{
 			std::cout << "call: filter\n";
 
+			if(this->tables.find(fc.params[0]) == this->tables.end())
+			{
+				std::cout << "ERROR: (While trying to filter " << fc.params[0] << ") No table loaded\n";
+				break;
+			}
+
 			std::string subtable_name = std::string("__fnret") + std::to_string(fc.stack_index) + "__";
 
+			db::table::SubTable* st = new db::table::SubTable(this->tables[fc.params[0]]);
+			
+			for(size_t i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+			{
+				// TODO this is a placeholder condition
+				if(i % 2 == 0)
+				{
+					st->rows.push_back(i);
+					std::cout << "ROW: " << i << "\n";
+				}
+			}
+
+			this->subtables[subtable_name] = st;
+
 			ret = subtable_name;
+
 			break;
 		}
 		case db::script::FunctionID::SET:
@@ -260,7 +308,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 void db::interpreter::Context::run(std::string line)
 {
 	if(db::parser::filter(line, ' ') == "flist")
-		std::cout << "print(name: value) -> none\nload(file: value, name: value) -> none\nunload(name: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
+		std::cout << "print(name: value) -> none\nprints(string: value) -> none\nload(file: value, name: value) -> none\nunload(name: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
 
 	std::string normalized = db::parser::normalize(line, ' ', true);
 	//std::cout << "=== NORMALIZED ===\n" << normalized << "\n";

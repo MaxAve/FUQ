@@ -86,3 +86,58 @@ void db::table::Table::print()
 		std::cout << bar << "─┴─";
 	std::cout << bar << "─┘\n";
 }
+
+db::table::SubTable::SubTable(Table* target)
+{
+	this->target = target;
+}
+
+void db::table::SubTable::print()
+{
+	int cell_width = 120 / this->target->table[0].size();
+
+	std::string bar;
+	for(int i = 0; i < cell_width; i++)
+		bar += "─";
+
+	std::cout << "┌─"; 
+	for(int i = 0; i < this->target->table[0].size() - 1; i++)
+		std::cout << bar << "─┬─";
+	std::cout << bar << "─┐\n";
+
+	for(int i = 0; i < this->rows.size(); i++)
+	{
+		std::cout << "│ ";
+		for(int j = 0; j < this->target->table[0].size(); j++)
+		{
+			std::string& value = this->target->table[this->rows[i]][j];
+			
+			if(value.length() <= cell_width)
+			{
+				std::cout << value;
+				for(int k = 0; k < (cell_width - value.length()); k++)
+					std::cout << " ";
+			}
+			else
+			{
+				std::cout << value.substr(0, cell_width - 3) << "...";
+			}
+
+			std::cout << " │ ";
+		}
+
+		if(i < this->rows.size() - 1)
+		{
+			std::cout << "\n├─"; 
+			for(int i = 0; i < this->target->table[0].size() - 1; i++)
+				std::cout << bar << "─┼─";
+			std::cout << bar << "─┤";
+		}
+		std::cout << "\n";
+	}
+	
+	std::cout << "└─"; 
+	for(int i = 0; i < this->target->table[0].size() - 1; i++)
+		std::cout << bar << "─┴─";
+	std::cout << bar << "─┘\n";
+}
