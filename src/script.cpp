@@ -47,6 +47,7 @@ const std::unordered_map<std::string, db::script::FunctionInfo> db::script::func
 	{"prints", {db::script::FunctionID::PRINTS, 1}},
 	{"load", {db::script::FunctionID::LOAD, 2}},
 	{"unload", {db::script::FunctionID::UNLOAD, 1}},
+	{"save", {db::script::FunctionID::SAVE, 2}},
 	{"set", {db::script::FunctionID::SET, 3}},
 	{"filter", {db::script::FunctionID::FILTER, 2}},
 	{"insert", {db::script::FunctionID::INSERT, -1}},

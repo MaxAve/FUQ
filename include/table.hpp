@@ -19,7 +19,8 @@ public:
     
 	Table(std::string file); // load
 	
-	void print(); 
+	void print();
+	void save(std::string path);
 };
 
 class SubTable
@@ -31,6 +32,7 @@ public:
 	SubTable(Table* target);
 
 	void print();
+	void save(std::string path);
 };
 } // namespace table
 } // namespace db

@@ -55,6 +55,7 @@ enum FunctionID
     PRINTS,
     LOAD,
 	UNLOAD,
+    SAVE,
     SET,
     FILTER,
     INSERT,

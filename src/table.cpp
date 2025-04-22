@@ -37,6 +37,11 @@ db::table::Table::Table(std::string file)
 	}
 }
 
+db::table::SubTable::SubTable(Table* target)
+{
+	this->target = target;
+}
+
 void db::table::Table::print()
 {
 	int cell_width = 120 / (this->table[0].size() + 1);
@@ -103,11 +108,6 @@ void db::table::Table::print()
 	std::cout << bar << "─┘\n";
 }
 
-db::table::SubTable::SubTable(Table* target)
-{
-	this->target = target;
-}
-
 void db::table::SubTable::print()
 {
 	int cell_width = 120 / (this->target->table[0].size() + 1);
@@ -172,4 +172,14 @@ void db::table::SubTable::print()
 	for(int i = 0; i < this->target->table[0].size(); i++)
 		std::cout << bar << "─┴─";
 	std::cout << bar << "─┘\n";
+}
+
+void db::table::Table::save(std::string path)
+{
+	std::cout << "INFO: Saving as " << path << "...\n";
+}
+
+void db::table::SubTable::save(std::string path)
+{
+	std::cout << "INFO: Saving as " << path << "...\n";
 }

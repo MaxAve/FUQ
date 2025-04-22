@@ -256,6 +256,25 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			this->unload_table(fc.params[0]);
 			break;
 		}
+		case db::script::FunctionID::SAVE:
+		{
+			if(this->tables.find(fc.params[0]) == this->tables.end())
+			{
+				if(this->subtables.find(fc.params[0]) == this->subtables.end())
+				{
+					std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Table or sub-table is not loaded\n";
+				}
+				else
+				{
+					this->subtables[fc.params[0]]->save(fc.params[1]);
+				}
+			}
+			else
+			{
+				this->tables[fc.params[0]]->save(fc.params[1]);
+			}
+			break;
+		}
 		case db::script::FunctionID::FILTER:
 		{
 			std::cout << "call: filter\n";
@@ -313,7 +332,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 void db::interpreter::Context::run(std::string line)
 {
 	if(db::parser::filter(line, ' ') == "flist")
-		std::cout << "print(name: value) -> none\nprints(string: value) -> none\nload(file: value, name: value) -> none\nunload(name: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
+		std::cout << "print(name: value) -> none\nprints(string: value) -> none\nload(file: value, name: value) -> none\nunload(name: value) -> none\nsave(name: value, path: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
 
 	std::string normalized = db::parser::normalize(line, ' ', true);
 	//std::cout << "=== NORMALIZED ===\n" << normalized << "\n";
