@@ -140,9 +140,14 @@ void db::interpreter::Context::unload_table(std::string name)
 {
 	// TODO subtables
 	if(this->tables.find(name) != this->tables.end())
+	{
 		delete this->tables[name];
+		this->tables.erase(name);
+	}
 	else
+	{
 		std::cout << "ERROR: (While trying to delete " << name << ") No table or sub-table loaded\n";
+	}
 }
 
 std::string db::interpreter::Context::call_function(const db::interpreter::AST &fcall)
