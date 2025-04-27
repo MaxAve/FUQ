@@ -191,7 +191,8 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			}
 			case db::script::TokenType::EXPRESSION:
 			{
-				fc.params.push_back("EXPRESSION");
+				fc.params.push_back("__fuq_lambda");
+				this->lambdas.push_back({{}, fcall.children[i]});
 				break;
 			}
 		}
@@ -209,7 +210,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 	std::cout << "Params: ";
 	for(int i = 0; i < fc.params.size(); i++)
 		std::cout << "[" << fc.params[i] << "] ";
-	std::cout << "\n";
+	std::cout << "\n";	
 	
 	// Certain functions will return a sub-table, which acts like an independant table with a specifc name.
 	// If a table is returned, ret is to be set to the name of the new table so that it can be used by higher
@@ -221,7 +222,6 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 	{
 		case db::script::FunctionID::PRINT:
 		{
-			std::cout << "call: print\n";
 			if(this->tables.find(fc.params[0]) == this->tables.end())
 			{
 				if(this->subtables.find(fc.params[0]) == this->subtables.end())
@@ -246,13 +246,11 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		}
 		case db::script::FunctionID::LOAD:
 		{
-			std::cout << "call: load\n";
 			this->load_table(fc.params[0], fc.params[1]);
 			break;
 		}
 		case db::script::FunctionID::UNLOAD:
 		{
-			std::cout << "call: unload\n";
 			this->unload_table(fc.params[0]);
 			break;
 		}
@@ -277,15 +275,13 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		}
 		case db::script::FunctionID::FILTER:
 		{
-			std::cout << "call: filter\n";
-
 			if(this->tables.find(fc.params[0]) == this->tables.end())
 			{
 				std::cout << "ERROR: (While trying to filter " << fc.params[0] << ") No table loaded\n";
 				break;
 			}
 
-			std::string subtable_name = std::string("__fnret") + std::to_string(fc.stack_index) + "__";
+			std::string subtable_name = std::string("__fuq_fnret") + std::to_string(fc.stack_index);
 
 			db::table::SubTable* st = new db::table::SubTable(this->tables[fc.params[0]]);
 			
@@ -295,7 +291,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				if(i % 2 == 0)
 				{
 					st->rows.push_back(i);
-					std::cout << "ROW: " << i << "\n";
+					//std::cout << "ROW: " << i << "\n";
 				}
 			}
 
@@ -307,17 +303,70 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		}
 		case db::script::FunctionID::SET:
 		{
-			std::cout << "call: set\n";
+			if(fc.params[2] == "__fuq_lambda")
+			{
+				std::cout << "Cant do lambdas yet :(\n";
+			}
+			else
+			{
+				if(this->tables.find(fc.params[0]) == this->tables.end())
+				{
+					if(this->subtables.find(fc.params[0]) == this->subtables.end())
+					{
+						std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Table or sub-table is not loaded\n";
+					}
+					else
+					{
+						this->subtables[fc.params[0]]->set(fc.params[1], fc.params[2]);
+					}
+				}
+				else
+				{
+					for(int i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+					{
+						this->tables[fc.params[0]]->set(fc.params[1], fc.params[2]);
+					}
+				}
+			}
 			break;
 		}
 		case db::script::FunctionID::ERASE:
 		{
-			std::cout << "call: erase\n";
+			if(this->tables.find(fc.params[0]) == this->tables.end())
+			{
+				if(this->subtables.find(fc.params[0]) == this->subtables.end())
+				{
+					std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Could not retrieve sub-table\n";
+				}
+				else
+				{
+					int deleted = 0;
+					for(int i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
+					{
+						if(this->subtables[fc.params[0]]->rows[i] == 0)
+							continue;
+						this->subtables[fc.params[0]]->target->table.erase(this->subtables[fc.params[0]]->target->table.begin() + this->subtables[fc.params[0]]->rows[i] - deleted);
+						deleted++;
+					}
+				}
+			}
+			else
+			{
+				this->tables[fc.params[0]]->table.clear(); // Not recommended
+			}
 			break;
 		}
 		case db::script::FunctionID::INSERT:
 		{
-			std::cout << "call: insert\n";
+			// TODO insert it sorted
+			std::vector<std::string> new_row;
+			for(int i = 1; i < fc.params.size(); i++)
+				new_row.push_back(fc.params[i]);
+			this->tables[fc.params[0]]->table.push_back(new_row);
+			break;
+		}
+		case db::script::FunctionID::SORT:
+		{
 			break;
 		}
 	}
@@ -327,6 +376,13 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		this->call_stack.pop_back();
 
 	return ret;
+}
+
+bool db::interpreter::Context::is_lambda(std::string value)
+{
+	if(value.length() <= 12)
+		return false;
+	return value.substr(0, 12) == "__fuq_lambda";
 }
 
 void db::interpreter::Context::run(std::string line)

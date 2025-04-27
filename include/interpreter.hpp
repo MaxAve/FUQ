@@ -31,18 +31,26 @@ typedef struct
 	int stack_index;
 } FCall;
 
+typedef struct
+{
+    std::unordered_map<std::string, std::string> params;
+    AST code;
+} Lambda;
+
 class Context
 {
 private:
     std::unordered_map<std::string, db::table::Table*> tables;
     std::unordered_map<std::string, db::table::SubTable*> subtables;
-    std::vector<AST> lambdas;
+    std::vector<Lambda> lambdas;
     std::vector<FCall> call_stack;
 public:
 	void load_table(std::string file, std::string newname);
     void unload_table(std::string name);
 
 	std::string call_function(const AST& fcall);
+
+    bool is_lambda(std::string value);
 
     void run(std::string line);
 

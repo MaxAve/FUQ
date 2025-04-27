@@ -59,7 +59,8 @@ enum FunctionID
     SET,
     FILTER,
     INSERT,
-    ERASE
+    ERASE,
+    SORT,
 };
 
 typedef struct
