@@ -11,6 +11,8 @@ namespace parser
 {
 token_t get(std::vector<token_t> tokens, int i); /* Use this function instead of getting tokens by index to avoid overflows */
 
+std::string remove_comments(std::string str);
+
 std::string filter(std::string str, char c, bool ignore_strings=false);
 
 std::string normalize(std::string str, char c, bool ignore_strings=false);

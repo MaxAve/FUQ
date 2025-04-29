@@ -193,6 +193,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			{
 				fc.params.push_back("__fuq_lambda");
 				this->lambdas.push_back({{}, fcall.children[i]});
+				this->lambdas[this->lambdas.size() - 1].code.print();
 				break;
 			}
 		}
@@ -207,10 +208,10 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		}
 	}
 	
-	std::cout << "Params: ";
-	for(int i = 0; i < fc.params.size(); i++)
-		std::cout << "[" << fc.params[i] << "] ";
-	std::cout << "\n";	
+	// std::cout << "Params: ";
+	// for(int i = 0; i < fc.params.size(); i++)
+	// 	std::cout << "[" << fc.params[i] << "] ";
+	// std::cout << "\n";
 	
 	// Certain functions will return a sub-table, which acts like an independant table with a specifc name.
 	// If a table is returned, ret is to be set to the name of the new table so that it can be used by higher
@@ -277,28 +278,41 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		{
 			if(this->tables.find(fc.params[0]) == this->tables.end())
 			{
-				std::cout << "ERROR: (While trying to filter " << fc.params[0] << ") No table loaded\n";
-				break;
-			}
-
-			std::string subtable_name = std::string("__fuq_fnret") + std::to_string(fc.stack_index);
-
-			db::table::SubTable* st = new db::table::SubTable(this->tables[fc.params[0]]);
-			
-			for(size_t i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
-			{
-				// TODO this is a placeholder condition
-				if(i % 2 == 0)
+				if(this->subtables.find(fc.params[0]) == this->subtables.end())
 				{
-					st->rows.push_back(i);
-					//std::cout << "ROW: " << i << "\n";
+					std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Table or sub-table is not loaded\n";
+				}
+				else
+				{
+					std::string subtable_name = std::string("__fuq_fnret") + std::to_string(fc.stack_index);
+
+					db::table::SubTable* st = new db::table::SubTable(this->subtables[fc.params[0]]->target);
+					
+					for(size_t i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
+					{
+						st->rows.push_back(i);
+					}
+
+					this->subtables[subtable_name] = st;
+
+					ret = subtable_name;
 				}
 			}
+			else
+			{
+				std::string subtable_name = std::string("__fuq_fnret") + std::to_string(fc.stack_index);
+				
+				db::table::SubTable* st = new db::table::SubTable(this->tables[fc.params[0]]);
+				
+				for(size_t i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+				{
+					st->rows.push_back(i);
+				}
 
-			this->subtables[subtable_name] = st;
+				this->subtables[subtable_name] = st;
 
-			ret = subtable_name;
-
+				ret = subtable_name;
+			}
 			break;
 		}
 		case db::script::FunctionID::SET:
@@ -378,11 +392,9 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 	return ret;
 }
 
-bool db::interpreter::Context::is_lambda(std::string value)
+std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &lambda)
 {
-	if(value.length() <= 12)
-		return false;
-	return value.substr(0, 12) == "__fuq_lambda";
+	return "";
 }
 
 void db::interpreter::Context::run(std::string line)

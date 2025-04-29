@@ -50,7 +50,7 @@ public:
 
 	std::string call_function(const AST& fcall);
 
-    bool is_lambda(std::string value);
+    std::string evaluate_lambda(Lambda& lambda);
 
     void run(std::string line);
 

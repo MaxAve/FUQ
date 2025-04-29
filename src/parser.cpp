@@ -7,6 +7,24 @@ token_t db::parser::get(std::vector<token_t> tokens, int i)
 	return tokens[i];
 }
 
+std::string db::parser::remove_comments(std::string str)
+{
+	bool in_string = false;
+	for(int i = 0; i < str.length(); i++)
+	{
+		if(i == 0 && str[i] == '"')
+			in_string = !in_string;
+		else if(str[i] == '"' && str[i - 1] != '\\')
+			in_string = !in_string;
+
+		if(!in_string && str[i] == '#')
+		{
+			return str.substr(0, i);
+		}
+	}
+	return str;
+}
+
 std::string db::parser::filter(std::string str, char c, bool ignore_strings)
 {
 	std::string res = "";
@@ -54,6 +72,8 @@ std::string db::parser::get_operator(std::string str, int i)
 
 std::vector<token_t> db::parser::tokenize(std::string str)
 {
+	str = db::parser::remove_comments(str);
+
 	std::vector<token_t> res = {""};
 
 	for(int i = 0; i < str.size(); i++)

@@ -29,7 +29,7 @@ class SubTable
 public:
 	Table* target;
 	std::vector<size_t> rows;
-
+	
 	SubTable(Table* target);
 
 	void print();
