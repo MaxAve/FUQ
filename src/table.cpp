@@ -201,19 +201,19 @@ void db::table::Table::set(std::string col, std::string value)
 		this->table[i][col_index] = value;
 }
 
-void db::table::SubTable::set(std::string col, std::string value)
-{
-	// TODO this is ass
-	int col_index = 0;
-	for(int i = 0; i < this->target->table[0].size(); i++)
-	{
-		if(this->target->table[0][i] == col)
-		{
-			col_index = i;
-			break;
-		}
-	}
+// void db::table::SubTable::set(std::string col, std::string value)
+// {
+// 	// TODO this is ass
+// 	int col_index = 0;
+// 	for(int i = 0; i < this->target->table[0].size(); i++)
+// 	{
+// 		if(this->target->table[0][i] == col)
+// 		{
+// 			col_index = i;
+// 			break;
+// 		}
+// 	}
 
-	for(int i = 1; i < this->rows.size(); i++)
-		this->target->table[this->rows[i]][col_index] = value;
-}
+// 	for(int i = 1; i < this->rows.size(); i++)
+// 		this->target->table[this->rows[i]][col_index] = value;
+// }

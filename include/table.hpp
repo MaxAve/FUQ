@@ -34,7 +34,7 @@ public:
 
 	void print();
 	void save(std::string path);
-	void set(std::string col, std::string value);
+	//void set(std::string col, std::string value);
 };
 } // namespace table
 } // namespace db

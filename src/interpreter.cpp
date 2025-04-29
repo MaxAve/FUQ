@@ -280,7 +280,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			{
 				if(this->subtables.find(fc.params[0]) == this->subtables.end())
 				{
-					std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Table or sub-table is not loaded\n";
+					std::cout << "ERROR: (While trying to filter " << fc.params[0] << ") Table or sub-table is not loaded\n";
 				}
 				else
 				{
@@ -288,10 +288,20 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 
 					db::table::SubTable* st = new db::table::SubTable(this->subtables[fc.params[0]]->target);
 					
-					for(size_t i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
+					for(size_t i = 1; i < this->subtables[fc.params[0]]->rows.size(); i++)
 					{
-						st->rows.push_back(i);
+						for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
+						{
+							this->lambdas[this->lambdas.size() - 1].params[this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->table[i][j];
+						}
+
+						if(db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]) == "1")
+						{
+							st->rows.push_back(i);
+						}
 					}
+
+					this->lambdas.pop_back();
 
 					this->subtables[subtable_name] = st;
 
@@ -304,10 +314,20 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				
 				db::table::SubTable* st = new db::table::SubTable(this->tables[fc.params[0]]);
 				
-				for(size_t i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+				for(size_t i = 1; i < this->tables[fc.params[0]]->table.size(); i++)
 				{
-					st->rows.push_back(i);
+					for(int j = 0; j < this->tables[fc.params[0]]->table[0].size(); j++)
+					{
+						this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
+					}
+
+					if(db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]) == "1")
+					{
+						st->rows.push_back(i);
+					}
 				}
+
+				this->lambdas.pop_back();
 
 				this->subtables[subtable_name] = st;
 
@@ -319,7 +339,41 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		{
 			if(fc.params[2] == "__fuq_lambda")
 			{
-				std::cout << "Cant do lambdas yet :(\n";
+				if(this->tables.find(fc.params[0]) == this->tables.end())
+				{
+					if(this->subtables.find(fc.params[0]) == this->subtables.end())
+					{
+						std::cout << "ERROR: (While trying to set " << fc.params[0] << ") Table or sub-table is not loaded\n";
+					}
+					else
+					{
+						for(int i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+						{
+							for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
+							{
+								this->lambdas[this->lambdas.size() - 1].params[this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->table[i][j];
+							}
+
+							this->subtables[fc.params[0]]->target->set(fc.params[1], db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]));
+						}
+
+						this->lambdas.pop_back();
+					}
+				}
+				else
+				{
+					for(int i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+					{
+						for(int j = 0; j < this->tables[fc.params[0]]->table[0].size(); j++)
+						{
+							this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
+						}
+
+						this->tables[fc.params[0]]->set(fc.params[1], db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]));
+					}
+
+					this->lambdas.pop_back();
+				}
 			}
 			else
 			{
@@ -327,11 +381,11 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				{
 					if(this->subtables.find(fc.params[0]) == this->subtables.end())
 					{
-						std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Table or sub-table is not loaded\n";
+						std::cout << "ERROR: (While trying to set " << fc.params[0] << ") Table or sub-table is not loaded\n";
 					}
 					else
 					{
-						this->subtables[fc.params[0]]->set(fc.params[1], fc.params[2]);
+						this->subtables[fc.params[0]]->target->set(fc.params[1], fc.params[2]);
 					}
 				}
 				else
@@ -394,7 +448,11 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 
 std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &lambda)
 {
-	return "";
+	for(auto& it : lambda.params)
+	{
+		std::cout << it.first << " : " << it.second << "\n";
+	}
+	return "0";
 }
 
 void db::interpreter::Context::run(std::string line)
