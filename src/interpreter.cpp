@@ -366,7 +366,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 						
 						int col_index = this->subtables[fc.params[0]]->target->get_col_index(fc.params[1]);
 
-						for(int i = 1; i < this->subtables[fc.params[0]]->rows.size(); i++)
+						for(int i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
 						{
 							for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
 							{
@@ -410,7 +410,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 					else
 					{
 						size_t col_index = this->subtables[fc.params[0]]->target->get_col_index(fc.params[1]);
-						for(int i = 1; i < this->subtables[fc.params[0]]->rows.size(); i++)
+						for(int i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
 						{
 							if(fc.params[2] == "[INDEX]")
 								this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = std::to_string(i);
@@ -612,6 +612,66 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	else if(operation == "==")
 	{
 		return (operand1 == operand2) ? "1" : "0";
+	}
+	else if(operation == ">")
+	{
+		if(this->is_number(operand1) && this->is_number(operand2))
+		{
+			if(this->is_float(operand1) || this->is_float(operand2))
+				return std::to_string((float)(std::stod(operand1) > std::stod(operand2))); // double
+			else
+				return std::to_string((long long)(std::stoll(operand1) > std::stoll(operand2))); // int (long long)
+		}
+		else
+		{
+			// TODO strings
+			return "1";
+		}
+	}
+	else if(operation == "<")
+	{
+		if(this->is_number(operand1) && this->is_number(operand2))
+		{
+			if(this->is_float(operand1) || this->is_float(operand2))
+				return std::to_string((float)(std::stod(operand1) < std::stod(operand2))); // double
+			else
+				return std::to_string((long long)(std::stoll(operand1) < std::stoll(operand2))); // int (long long)
+		}
+		else
+		{
+			// TODO strings
+			return "1";
+		}
+	}
+	else if(operation == ">=")
+	{
+		if(this->is_number(operand1) && this->is_number(operand2))
+		{
+			if(this->is_float(operand1) || this->is_float(operand2))
+				return std::to_string((float)(std::stod(operand1) >= std::stod(operand2))); // double
+			else
+				return std::to_string((long long)(std::stoll(operand1) >= std::stoll(operand2))); // int (long long)
+		}
+		else
+		{
+			// TODO strings
+			return "1";
+		}
+	}
+	else if(operation == "<=")
+	{
+		if(this->is_number(operand1) && this->is_number(operand2))
+		{
+			if(this->is_float(operand1) || this->is_float(operand2))
+				return std::to_string((float)(std::stod(operand1) <= std::stod(operand2))); // double
+			else
+				return std::to_string((long long)(std::stoll(operand1) <= std::stoll(operand2))); // int (long long)
+		}
+		else
+		{
+			// TODO strings
+			return "1";
+		}
 	}
 	
 	return "0";
