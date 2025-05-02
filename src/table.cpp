@@ -42,6 +42,15 @@ db::table::SubTable::SubTable(Table* target)
 	this->target = target;
 }
 
+size_t db::table::Table::get_col_index(std::string col_name)
+{
+	int col_index = 0;
+	for(int i = 0; i < this->table[0].size(); i++)
+		if(this->table[0][i] == col_name)
+			return i;
+	return 0;
+}
+
 void db::table::Table::print()
 {
 	int cell_width = 120 / (this->table[0].size() + 1);

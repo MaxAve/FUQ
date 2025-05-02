@@ -18,6 +18,8 @@ public:
 	std::vector<std::vector<std::string>> table; // TODO optimize
     
 	Table(std::string file); // load
+
+	size_t get_col_index(std::string col_name);
 	
 	void print();
 	void save(std::string path);

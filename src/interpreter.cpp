@@ -288,12 +288,14 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 
 					db::table::SubTable* st = new db::table::SubTable(this->subtables[fc.params[0]]->target);
 					
-					for(size_t i = 1; i < this->subtables[fc.params[0]]->rows.size(); i++)
+					for(size_t i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
 					{
 						for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
 						{
 							this->lambdas[this->lambdas.size() - 1].params[this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->table[i][j];
 						}
+
+						this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
 
 						if(db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]) == "1")
 						{
@@ -314,12 +316,14 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				
 				db::table::SubTable* st = new db::table::SubTable(this->tables[fc.params[0]]);
 				
-				for(size_t i = 1; i < this->tables[fc.params[0]]->table.size(); i++)
+				for(size_t i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
 				{
 					for(int j = 0; j < this->tables[fc.params[0]]->table[0].size(); j++)
 					{
 						this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
 					}
+
+					this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
 
 					if(db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]) == "1")
 					{
@@ -347,14 +351,29 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 					}
 					else
 					{
-						for(int i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+						// for(int i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+						// {
+						// 	for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
+						// 	{
+						// 		this->lambdas[this->lambdas.size() - 1].params[this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->table[i][j];
+						// 	}
+
+						// 	// TODO this sets every value once, replace with loop
+						// 	//this->subtables[fc.params[0]]->target->set(fc.params[1], db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]));
+						// }
+
+						// TODO this is lowkey broken
+						
+						int col_index = this->subtables[fc.params[0]]->target->get_col_index(fc.params[1]);
+
+						for(int i = 1; i < this->subtables[fc.params[0]]->rows.size(); i++)
 						{
 							for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
 							{
-								this->lambdas[this->lambdas.size() - 1].params[this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->table[i][j];
+								this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
 							}
-
-							this->subtables[fc.params[0]]->target->set(fc.params[1], db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]));
+							this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
+							this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]);
 						}
 
 						this->lambdas.pop_back();
@@ -362,14 +381,19 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				}
 				else
 				{
-					for(int i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+					// TODO this sets every value once, replace with loop
+					//this->tables[fc.params[0]]->set(fc.params[1], db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]));
+
+					int col_index = this->tables[fc.params[0]]->get_col_index(fc.params[1]);
+
+					for(int i = 1; i < this->tables[fc.params[0]]->table.size(); i++)
 					{
 						for(int j = 0; j < this->tables[fc.params[0]]->table[0].size(); j++)
 						{
 							this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
 						}
-
-						this->tables[fc.params[0]]->set(fc.params[1], db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]));
+						this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
+						this->tables[fc.params[0]]->table[i][col_index] = db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]);
 					}
 
 					this->lambdas.pop_back();
@@ -385,14 +409,30 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 					}
 					else
 					{
-						this->subtables[fc.params[0]]->target->set(fc.params[1], fc.params[2]);
+						size_t col_index = this->subtables[fc.params[0]]->target->get_col_index(fc.params[1]);
+						for(int i = 1; i < this->subtables[fc.params[0]]->rows.size(); i++)
+						{
+							if(fc.params[2] == "[INDEX]")
+								this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = std::to_string(i);
+								//this->subtables[fc.params[0]]->table[i][col_index] = std::to_string(i);
+							else
+								this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = fc.params[2];
+								//this->tables[fc.params[0]]->table[i][col_index] = fc.params[2];
+							//this->tables[fc.params[0]]->set(fc.params[1], fc.params[2]);
+						}
+						//this->subtables[fc.params[0]]->target->set(fc.params[1], fc.params[2]); // TODO
 					}
 				}
 				else
 				{
-					for(int i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+					size_t col_index = this->tables[fc.params[0]]->get_col_index(fc.params[1]);
+					for(int i = 1; i < this->tables[fc.params[0]]->table.size(); i++)
 					{
-						this->tables[fc.params[0]]->set(fc.params[1], fc.params[2]);
+						if(fc.params[2] == "[INDEX]")
+							this->tables[fc.params[0]]->table[i][col_index] = std::to_string(i);
+						else
+							this->tables[fc.params[0]]->table[i][col_index] = fc.params[2];
+						//this->tables[fc.params[0]]->set(fc.params[1], fc.params[2]);
 					}
 				}
 			}
@@ -448,11 +488,170 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 
 std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &lambda)
 {
-	for(auto& it : lambda.params)
+	// for(auto& it : lambda.params)
+	// {
+	// 	std::cout << it.first << " : " << it.second << "\n";
+	// }
+
+	// Sanitize values
+	// TODO may not be a terrible idea to encapsulate this somehow
+	for(int i = 0; i < lambda.code.children.size(); i++)
 	{
-		std::cout << it.first << " : " << it.second << "\n";
+		// Truncate spaces
+		int end = lambda.code.children[i].value.size() - 1;
+		for(int j = lambda.code.children[i].value.size() - 1; j >= 0; j--)
+		{
+			if(lambda.code.children[i].value[j] != ' ')
+			{
+				end = j;
+				break;
+			}
+		}
+		lambda.code.children[i].value = lambda.code.children[i].value.substr(0, end + 1);
+
+		// Trim away matching quotation marks
+		if((lambda.code.children[i].value[0] == '"' || lambda.code.children[i].value[0] == '\'') && lambda.code.children[i].value[0] == lambda.code.children[i].value[lambda.code.children[i].value.length() - 1])
+		{
+			lambda.code.children[i].value = lambda.code.children[i].value.substr(1, lambda.code.children[i].value.length() - 2);
+		}
 	}
+
+	std::string operation=lambda.code.children[0].value, operand1, operand2;
+
+	// 1st operand
+	if(lambda.code.children[1].type == db::script::TokenType::EXPRESSION)
+	{
+		// evaluate lambda here
+	}
+	else
+	{
+		operand1 = lambda.code.children[1].value;
+		if(operand1[0] == '[' && operand1[operand1.length() - 1] == ']')
+		{
+			std::string x = operand1.substr(1, operand1.length() - 2);
+			if(lambda.params.find(x) != lambda.params.end())
+				operand1 = lambda.params[x];
+		}
+	}
+	
+	// 2nd operand
+	if(lambda.code.children[2].type == db::script::TokenType::EXPRESSION)
+	{
+		// evaluate lambda here
+	}
+	else
+	{
+		operand2 = lambda.code.children[2].value;
+		if(operand2[0] == '[' && operand2[operand2.length() - 1] == ']')
+		{
+			std::string x = operand2.substr(1, operand2.length() - 2);
+			if(lambda.params.find(x) != lambda.params.end())
+				operand2 = lambda.params[x];
+		}
+	}
+
+	if(operation == "+")
+	{
+		if(this->is_number(operand1) && this->is_number(operand2))
+		{
+			if(this->is_float(operand1) || this->is_float(operand2))
+				return std::to_string((float)(std::stod(operand1) + std::stod(operand2))); // double
+			else
+				return std::to_string((long long)(std::stoll(operand1) + std::stoll(operand2))); // int (long long)
+		}
+		else
+		{
+			return operand1 + operand2; // string (concat)
+		}
+	}
+	else if(operation == "-")
+	{
+		if(this->is_number(operand1) && this->is_number(operand2))
+		{
+			if(this->is_float(operand1) || this->is_float(operand2))
+				return std::to_string((float)(std::stod(operand1) - std::stod(operand2))); // double
+			else
+				return std::to_string((long long)(std::stoll(operand1) - std::stoll(operand2))); // int (long long)
+		}
+		else
+		{
+			std::cout << "ERROR: (While trying to evaluate " << operand1 << " - " << operand2 << ") Cannot substract two strings\n";
+			return "NULL";
+		}
+	}
+	else if(operation == "*")
+	{
+		if(this->is_number(operand1) && this->is_number(operand2))
+		{
+			if(this->is_float(operand1) || this->is_float(operand2))
+				return std::to_string((float)(std::stod(operand1) * std::stod(operand2))); // double
+			else
+				return std::to_string((long long)(std::stoll(operand1) * std::stoll(operand2))); // int (long long)
+		}
+		else
+		{
+			std::cout << "ERROR: (While trying to evaluate " << operand1 << " * " << operand2 << ") Cannot multiply two strings\n";
+			return "NULL";
+		}
+	}
+	else if(operation == "/")
+	{
+		if(this->is_number(operand1) && this->is_number(operand2))
+		{
+			if(this->is_float(operand1) || this->is_float(operand2))
+				return std::to_string((float)(std::stod(operand1) / std::stod(operand2))); // double
+			else
+				return std::to_string((long long)(std::stoll(operand1) / std::stoll(operand2))); // int (long long)
+		}
+		else
+		{
+			std::cout << "ERROR: (While trying to evaluate " << operand1 << " / " << operand2 << ") Cannot divide two strings\n";
+			return "NULL";
+		}
+	}
+	else if(operation == "==")
+	{
+		return (operand1 == operand2) ? "1" : "0";
+	}
+	
 	return "0";
+}
+
+bool db::interpreter::Context::is_int(std::string str)
+{
+	for(int i = 0; i < str.length(); i++)
+	{
+		if(str[i] < '0' || str[i] > '9')
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool db::interpreter::Context::is_float(std::string str)
+{
+	bool dot_found = false;
+	for(int i = 0; i < str.length(); i++)
+	{
+		if(str[i] == '.')
+		{
+			if(dot_found)
+			{
+				return false;
+			}
+			dot_found = true;
+		} else if(str[i] < '0' || str[i] > '9')
+		{
+			return false;
+		}
+	}
+	return dot_found;
+}
+
+bool db::interpreter::Context::is_number(std::string str)
+{
+	return this->is_int(str) || this->is_float(str);
 }
 
 void db::interpreter::Context::run(std::string line)

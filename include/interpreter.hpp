@@ -52,6 +52,12 @@ public:
 
     std::string evaluate_lambda(Lambda& lambda);
 
+    bool is_int(std::string str);
+
+    bool is_float(std::string str);
+
+    bool is_number(std::string str);
+
     void run(std::string line);
 
 	// Utils
