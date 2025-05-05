@@ -221,7 +221,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 	// Corresponding function calls
 	switch(fc.fid)
 	{
-		case db::script::FunctionID::PRINT:
+		case db::script::FunctionID::PRINTT:
 		{
 			if(this->tables.find(fc.params[0]) == this->tables.end())
 			{
@@ -351,19 +351,6 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 					}
 					else
 					{
-						// for(int i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
-						// {
-						// 	for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
-						// 	{
-						// 		this->lambdas[this->lambdas.size() - 1].params[this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->table[i][j];
-						// 	}
-
-						// 	// TODO this sets every value once, replace with loop
-						// 	//this->subtables[fc.params[0]]->target->set(fc.params[1], db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]));
-						// }
-
-						// TODO this is lowkey broken
-						
 						int col_index = this->subtables[fc.params[0]]->target->get_col_index(fc.params[1]);
 
 						for(int i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
@@ -381,9 +368,6 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				}
 				else
 				{
-					// TODO this sets every value once, replace with loop
-					//this->tables[fc.params[0]]->set(fc.params[1], db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]));
-
 					int col_index = this->tables[fc.params[0]]->get_col_index(fc.params[1]);
 
 					for(int i = 1; i < this->tables[fc.params[0]]->table.size(); i++)
@@ -414,13 +398,9 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 						{
 							if(fc.params[2] == "[INDEX]")
 								this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = std::to_string(i);
-								//this->subtables[fc.params[0]]->table[i][col_index] = std::to_string(i);
 							else
 								this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = fc.params[2];
-								//this->tables[fc.params[0]]->table[i][col_index] = fc.params[2];
-							//this->tables[fc.params[0]]->set(fc.params[1], fc.params[2]);
 						}
-						//this->subtables[fc.params[0]]->target->set(fc.params[1], fc.params[2]); // TODO
 					}
 				}
 				else
@@ -432,7 +412,6 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 							this->tables[fc.params[0]]->table[i][col_index] = std::to_string(i);
 						else
 							this->tables[fc.params[0]]->table[i][col_index] = fc.params[2];
-						//this->tables[fc.params[0]]->set(fc.params[1], fc.params[2]);
 					}
 				}
 			}
@@ -448,19 +427,19 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				}
 				else
 				{
-					int deleted = 0;
+					// TODO fix
+					/*
 					for(int i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
 					{
 						if(this->subtables[fc.params[0]]->rows[i] == 0)
 							continue;
-						this->subtables[fc.params[0]]->target->table.erase(this->subtables[fc.params[0]]->target->table.begin() + this->subtables[fc.params[0]]->rows[i] - deleted);
-						deleted++;
-					}
+						this->subtables[fc.params[0]]->target->table.erase(this->subtables[fc.params[0]]->target->table.begin() + this->subtables[fc.params[0]]->rows[i]);
+					}*/
 				}
 			}
 			else
 			{
-				this->tables[fc.params[0]]->table.clear(); // Not recommended
+				this->tables[fc.params[0]]->table.clear();
 			}
 			break;
 		}
@@ -475,6 +454,47 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		}
 		case db::script::FunctionID::SORT:
 		{
+			if(this->tables.find(fc.params[0]) == this->tables.end())
+			{
+				if(this->subtables.find(fc.params[0]) == this->subtables.end())
+				{
+					std::cout << "ERROR: (While trying to sort " << fc.params[0] << ") Table or sub-table is not loaded\n";
+				}
+				else
+				{
+					int col_index = this->subtables[fc.params[0]]->target->get_col_index(fc.params[1]);
+
+					for(int i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
+					{
+						for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
+						{
+							this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
+						}
+						this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
+						// TODO
+						this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]);
+					}
+
+					this->lambdas.pop_back();
+				}
+			}
+			else
+			{
+				int col_index = this->tables[fc.params[0]]->get_col_index(fc.params[1]);
+
+				for(int i = 1; i < this->tables[fc.params[0]]->table.size(); i++)
+				{
+					for(int j = 0; j < this->tables[fc.params[0]]->table[0].size(); j++)
+					{
+						this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
+					}
+					this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
+					// TODO
+					this->tables[fc.params[0]]->table[i][col_index] = db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]);
+				}
+
+				this->lambdas.pop_back();
+			}
 			break;
 		}
 	}
@@ -606,6 +626,21 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		else
 		{
 			std::cout << "ERROR: (While trying to evaluate " << operand1 << " / " << operand2 << ") Cannot divide two strings\n";
+			return "NULL";
+		}
+	}
+	else if(operation == "%")
+	{
+		if(this->is_number(operand1) && this->is_number(operand2))
+		{
+			if(this->is_float(operand1) || this->is_float(operand2))
+				std::cout << "ERROR: (While trying to evaluate " << operand1 << " % " << operand2 << ") Cannot mod floating point numbers\n";
+			else
+				return std::to_string((long long)(std::stoll(operand1) % std::stoll(operand2))); // int (long long)
+		}
+		else
+		{
+			std::cout << "ERROR: (While trying to evaluate " << operand1 << " % " << operand2 << ") Cannot mod strings\n";
 			return "NULL";
 		}
 	}

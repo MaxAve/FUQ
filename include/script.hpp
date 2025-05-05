@@ -51,7 +51,7 @@ extern const std::unordered_map<OperationType, OPInfo> operator_info;
 
 enum FunctionID
 {
-	PRINT,
+	PRINTT,
     PRINTS,
     LOAD,
 	UNLOAD,

@@ -43,7 +43,7 @@ const std::unordered_map<db::script::OperationType, db::script::OPInfo> db::scri
 };
 
 const std::unordered_map<std::string, db::script::FunctionInfo> db::script::function_infos = {
-	{"print", {db::script::FunctionID::PRINT, 1}},
+	{"printt", {db::script::FunctionID::PRINTT, 1}},
 	{"prints", {db::script::FunctionID::PRINTS, 1}},
 	{"load", {db::script::FunctionID::LOAD, 2}},
 	{"unload", {db::script::FunctionID::UNLOAD, 1}},
