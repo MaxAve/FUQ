@@ -61,6 +61,8 @@ enum FunctionID
     INSERT,
     ERASE,
     SORT,
+    SETSORT,
+    HELP,
 };
 
 typedef struct

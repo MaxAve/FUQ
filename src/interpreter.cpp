@@ -154,7 +154,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 {
 	if(db::script::function_infos.find(fcall.value) == db::script::function_infos.end())
 	{
-		std::cout << "ERROR: Function '" << fcall.value << "' does not exist. Type 'flist' for a list of function definitions.\n";
+		std::cout << "ERROR: Function '" << fcall.value << "' does not exist. Type 'flist' for a list of functions.\n";
 		return "";
 	}
 
@@ -257,20 +257,20 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		}
 		case db::script::FunctionID::SAVE:
 		{
-			if(this->tables.find(fc.params[0]) == this->tables.end())
+			if(this->tables.find(fc.params[1]) == this->tables.end())
 			{
-				if(this->subtables.find(fc.params[0]) == this->subtables.end())
+				if(this->subtables.find(fc.params[1]) == this->subtables.end())
 				{
-					std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Table or sub-table is not loaded\n";
+					std::cout << "ERROR: (While trying to save " << fc.params[1] << ") Table or sub-table is not loaded\n";
 				}
 				else
 				{
-					this->subtables[fc.params[0]]->save(fc.params[1]);
+					this->subtables[fc.params[1]]->save(fc.params[0]);
 				}
 			}
 			else
 			{
-				this->tables[fc.params[0]]->save(fc.params[1]);
+				this->tables[fc.params[1]]->save(fc.params[0]);
 			}
 			break;
 		}
@@ -464,8 +464,14 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			this->tables[fc.params[0]]->table.push_back(new_row);
 			break;
 		}
+		case db::script::FunctionID::SETSORT:
+		{
+			// TODO
+			break;
+		}
 		case db::script::FunctionID::SORT:
 		{
+			// TODO
 			if(this->tables.find(fc.params[0]) == this->tables.end())
 			{
 				if(this->subtables.find(fc.params[0]) == this->subtables.end())
@@ -474,40 +480,18 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				}
 				else
 				{
-					int col_index = this->subtables[fc.params[0]]->target->get_col_index(fc.params[1]);
-
-					for(int i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
-					{
-						for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
-						{
-							this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
-						}
-						this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
-						// TODO
-						this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]);
-					}
-
-					this->lambdas.pop_back();
+					
 				}
 			}
 			else
 			{
-				int col_index = this->tables[fc.params[0]]->get_col_index(fc.params[1]);
-
-				for(int i = 1; i < this->tables[fc.params[0]]->table.size(); i++)
-				{
-					for(int j = 0; j < this->tables[fc.params[0]]->table[0].size(); j++)
-					{
-						this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
-					}
-					this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
-					// TODO
-					this->tables[fc.params[0]]->table[i][col_index] = db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]);
-				}
-
-				this->lambdas.pop_back();
+				
 			}
 			break;
+		}
+		case db::script::FunctionID::HELP:
+		{
+			db::help::get_function_info(fc.params[0]);
 		}
 	}
 
@@ -801,9 +785,6 @@ bool db::interpreter::Context::is_number(std::string str)
 
 void db::interpreter::Context::run(std::string line)
 {
-	if(db::parser::filter(line, ' ') == "flist")
-		std::cout << "print(name: value) -> none\nprints(string: value) -> none\nload(file: value, name: value) -> none\nunload(name: value) -> none\nsave(name: value, path: value) -> none\nset(table: ptr_list, row: value, val: value/expression) -> none\nfilter(table: ptr_list, condition: value/expression) -> ptr_list\ninsert(table: value, row: value/expression...) -> none\nerase(table: ptr_list) -> none\n\nFor detailed explanations for usage, type 'fhelp <function>' with <function> as the corresponding function name.\n";
-
 	std::string normalized = db::parser::normalize(line, ' ', true);
 	//std::cout << "=== NORMALIZED ===\n" << normalized << "\n";
 	
@@ -812,6 +793,11 @@ void db::interpreter::Context::run(std::string line)
 	//for(int i = 0; i < tokens.size() - 1; i++)
 	//	std::cout << "'" << tokens[i] << "', ";
 	//std::cout << "'" << tokens[tokens.size() - 1] << "']\n";
+
+	if(tokens.size() == 1 && tokens[0] == "flist")
+	{
+		db::help::list_all_functions();
+	}
 
 	db::interpreter::AST ast(tokens);
 	//std::cout << "=== AST ===\n";

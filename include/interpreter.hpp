@@ -6,6 +6,7 @@
 #include <cmath>
 #include "parser.hpp"
 #include "table.hpp"
+#include "help.hpp"
 
 namespace db
 {
