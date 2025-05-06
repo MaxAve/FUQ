@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <variant>
+#include <cmath>
 #include "parser.hpp"
 #include "table.hpp"
 

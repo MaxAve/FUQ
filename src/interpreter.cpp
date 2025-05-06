@@ -548,6 +548,7 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		}
 	}
 
+	// NOTE: for single-operand operations (e.g. NOT), operand2 will be used; operand1 will remain uninitialized
 	std::string operation=lambda.code.children[0].value, operand1, operand2;
 
 	// 1st operand
@@ -582,12 +583,30 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		}
 	}
 
-	if(operation == "+")
+	if(operation == "!")
+	{
+		if(this->is_number(operand2))
+		{
+			if(this->is_float(operand2))
+			{
+				std::cout << "ERROR: (While trying to evaluate !" << operand2 << ") Cannot NOT a float\n";
+				return "NULL";
+			}
+			else
+				return std::stoll(operand2) != 0 ? "0" : "1";
+		}
+		else
+		{
+			std::cout << "ERROR: (While trying to evaluate !" << operand2 << ") Cannot NOT a string\n";
+			return "NULL";
+		}
+	}
+	else if(operation == "+")
 	{
 		if(this->is_number(operand1) && this->is_number(operand2))
 		{
 			if(this->is_float(operand1) || this->is_float(operand2))
-				return std::to_string((float)(std::stod(operand1) + std::stod(operand2))); // double
+				return std::to_string((double)(std::stod(operand1) + std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) + std::stoll(operand2))); // int (long long)
 		}
@@ -601,7 +620,7 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		if(this->is_number(operand1) && this->is_number(operand2))
 		{
 			if(this->is_float(operand1) || this->is_float(operand2))
-				return std::to_string((float)(std::stod(operand1) - std::stod(operand2))); // double
+				return std::to_string((double)(std::stod(operand1) - std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) - std::stoll(operand2))); // int (long long)
 		}
@@ -616,7 +635,7 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		if(this->is_number(operand1) && this->is_number(operand2))
 		{
 			if(this->is_float(operand1) || this->is_float(operand2))
-				return std::to_string((float)(std::stod(operand1) * std::stod(operand2))); // double
+				return std::to_string((double)(std::stod(operand1) * std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) * std::stoll(operand2))); // int (long long)
 		}
@@ -631,7 +650,7 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		if(this->is_number(operand1) && this->is_number(operand2))
 		{
 			if(this->is_float(operand1) || this->is_float(operand2))
-				return std::to_string((float)(std::stod(operand1) / std::stod(operand2))); // double
+				return std::to_string((double)(std::stod(operand1) / std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) / std::stoll(operand2))); // int (long long)
 		}
@@ -656,7 +675,26 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 			return "NULL";
 		}
 	}
+	else if(operation == "^")
+	{
+		if(this->is_number(operand1) && this->is_number(operand2))
+		{
+			if(this->is_float(operand1) || this->is_float(operand2))
+				return std::to_string(std::pow(std::stod(operand1), std::stod(operand2)));
+			else
+				return std::to_string((long long)(std::pow(std::stoll(operand1), std::stoll(operand2)))); // int (long long)
+		}
+		else
+		{
+			std::cout << "ERROR: (While trying to evaluate " << operand1 << " ^ " << operand2 << ") Cannot pow two strings\n";
+			return "NULL";
+		}
+	}
 	else if(operation == "==")
+	{
+		return (operand1 == operand2) ? "1" : "0";
+	}
+	else if(operation == "!=")
 	{
 		return (operand1 == operand2) ? "1" : "0";
 	}
@@ -720,7 +758,7 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 			return "1";
 		}
 	}
-	
+
 	return "0";
 }
 
