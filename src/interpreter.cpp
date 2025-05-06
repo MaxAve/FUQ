@@ -296,7 +296,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 							this->lambdas[this->lambdas.size() - 1].params[this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][j];
 						}
 
-						this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
+						this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(this->subtables[fc.params[0]]->rows[i]);
 
 						if(db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]) == "1")
 						{
@@ -429,14 +429,24 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				}
 				else
 				{
-					// TODO fix
-					/*
-					for(int i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
+					// TODO slower than yo mom
+					std::vector<std::vector<std::string>> table;
+					for(int i = 0; i < this->subtables[fc.params[0]]->target->table.size(); i++)
 					{
-						if(this->subtables[fc.params[0]]->rows[i] == 0)
+						bool contains = false;
+						for(int j = 0; j < this->subtables[fc.params[0]]->rows.size(); j++)
+						{
+							if(i == this->subtables[fc.params[0]]->rows[j])
+							{
+								contains = true;
+								break;
+							}
+						}
+						if(contains)
 							continue;
-						this->subtables[fc.params[0]]->target->table.erase(this->subtables[fc.params[0]]->target->table.begin() + this->subtables[fc.params[0]]->rows[i]);
-					}*/
+						table.push_back(this->subtables[fc.params[0]]->target->table[i]);
+					}
+					this->subtables[fc.params[0]]->target->table = table;
 				}
 			}
 			else
