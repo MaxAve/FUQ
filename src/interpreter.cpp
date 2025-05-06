@@ -193,7 +193,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			{
 				fc.params.push_back("__fuq_lambda");
 				this->lambdas.push_back({{}, fcall.children[i]});
-				this->lambdas[this->lambdas.size() - 1].code.print();
+				//this->lambdas[this->lambdas.size() - 1].code.print();
 				break;
 			}
 		}
@@ -290,16 +290,17 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 					
 					for(size_t i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
 					{
+						// Row values as lambda params
 						for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
 						{
-							this->lambdas[this->lambdas.size() - 1].params[this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->table[i][j];
+							this->lambdas[this->lambdas.size() - 1].params[this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][j];
 						}
 
 						this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
 
 						if(db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]) == "1")
 						{
-							st->rows.push_back(i);
+							st->rows.push_back(this->subtables[fc.params[0]]->rows[i]);
 						}
 					}
 
@@ -316,8 +317,9 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				
 				db::table::SubTable* st = new db::table::SubTable(this->tables[fc.params[0]]);
 				
-				for(size_t i = 0; i < this->tables[fc.params[0]]->table.size(); i++)
+				for(size_t i = 1; i < this->tables[fc.params[0]]->table.size(); i++)
 				{
+					// Row values as lambda params
 					for(int j = 0; j < this->tables[fc.params[0]]->table[0].size(); j++)
 					{
 						this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
