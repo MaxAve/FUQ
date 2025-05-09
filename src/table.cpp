@@ -186,7 +186,16 @@ void db::table::SubTable::print()
 
 void db::table::Table::save(std::string path)
 {
-	std::cout << "INFO: Saving as " << path << "...\n";
+	std::ofstream out(path);
+
+	for(int i = 0; i < this->table.size(); i++)
+	{
+		for(int j = 0; j < this->table[0].size() - 1; j++)
+		{
+			out << this->table[i][j] << ",";
+		}
+		out << this->table[i][this->table[0].size() - 1] << "\n";
+	}
 }
 
 void db::table::SubTable::save(std::string path)

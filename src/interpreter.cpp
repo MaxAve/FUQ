@@ -521,10 +521,10 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 
 std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &lambda)
 {
-	// for(auto& it : lambda.params)
-	// {
-	// 	std::cout << it.first << " : " << it.second << "\n";
-	// }
+	for(auto& it : lambda.params)
+	{
+		std::cout << it.first << " : \"" << it.second << "\"\n";
+	}
 
 	// Sanitize values
 	// TODO may not be a terrible idea to encapsulate this somehow
@@ -555,7 +555,8 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	// 1st operand
 	if(lambda.code.children[1].type == db::script::TokenType::EXPRESSION)
 	{
-		// evaluate lambda here
+		db::interpreter::Lambda l = {lambda.params, lambda.code.children[1]};
+		operand1 = this->evaluate_lambda(l);
 	}
 	else
 	{
@@ -571,7 +572,8 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	// 2nd operand
 	if(lambda.code.children[2].type == db::script::TokenType::EXPRESSION)
 	{
-		// evaluate lambda here
+		db::interpreter::Lambda l = {lambda.params, lambda.code.children[2]};
+		operand1 = this->evaluate_lambda(l);
 	}
 	else
 	{
