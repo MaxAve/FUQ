@@ -7,6 +7,7 @@
 #include "parser.hpp"
 #include "table.hpp"
 #include "help.hpp"
+#include "utils.hpp"
 
 namespace db
 {
@@ -47,6 +48,8 @@ private:
     std::vector<Lambda> lambdas;
     std::vector<FCall> call_stack;
 public:
+    uint32_t err = 0;
+
 	void load_table(std::string file, std::string newname);
     void unload_table(std::string name);
 
@@ -54,11 +57,11 @@ public:
 
     std::string evaluate_lambda(Lambda& lambda);
 
-    bool is_int(std::string str);
+    // bool is_int(std::string str);
 
-    bool is_float(std::string str);
+    // bool is_float(std::string str);
 
-    bool is_number(std::string str);
+    // bool is_number(std::string str);
 
     void run(std::string line);
 

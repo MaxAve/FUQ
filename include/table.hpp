@@ -7,15 +7,24 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include "utils.hpp"
 
 namespace db
 {
 namespace table
 {
+typedef struct
+{
+    bool ascending;
+    size_t column_index;
+} SortRule;
+
 class Table
 {
 public:
 	std::vector<std::vector<std::string>> table; // TODO optimize
+
+	SortRule sort_rule;
     
 	Table(std::string file); // load
 
@@ -24,6 +33,7 @@ public:
 	void print();
 	void save(std::string path);
 	void set(std::string col, std::string value);
+	void sort();
 };
 
 class SubTable
@@ -36,7 +46,7 @@ public:
 
 	void print();
 	void save(std::string path);
-	//void set(std::string col, std::string value);
+	void sort();
 };
 } // namespace table
 } // namespace db

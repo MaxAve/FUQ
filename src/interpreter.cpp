@@ -147,6 +147,7 @@ void db::interpreter::Context::unload_table(std::string name)
 	else
 	{
 		std::cout << "ERROR: (While trying to delete " << name << ") No table or sub-table loaded\n";
+		this->err = 1;
 	}
 }
 
@@ -155,6 +156,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 	if(db::script::function_infos.find(fcall.value) == db::script::function_infos.end())
 	{
 		std::cout << "ERROR: Function '" << fcall.value << "' does not exist. Type 'flist' for a list of functions.\n";
+		this->err = 1;
 		return "";
 	}
 
@@ -167,6 +169,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 	if(db::script::function_infos.at(fcall.value).expect_parameters >= 0 && fcall.children.size() != db::script::function_infos.at(fcall.value).expect_parameters)
 	{
 		std::cout << "ERROR: In function '" << fcall.value << "': expected " << (int)db::script::function_infos.at(fcall.value).expect_parameters << " parameters but got " << fcall.children.size() << ".\n";
+		this->err = 1;
 		return "";
 	}
 
@@ -228,6 +231,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				if(this->subtables.find(fc.params[0]) == this->subtables.end())
 				{
 					std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Table or sub-table is not loaded\n";
+					this->err = 1;
 				}
 				else
 				{
@@ -262,6 +266,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				if(this->subtables.find(fc.params[1]) == this->subtables.end())
 				{
 					std::cout << "ERROR: (While trying to save " << fc.params[1] << ") Table or sub-table is not loaded\n";
+					this->err = 1;
 				}
 				else
 				{
@@ -281,6 +286,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				if(this->subtables.find(fc.params[0]) == this->subtables.end())
 				{
 					std::cout << "ERROR: (While trying to filter " << fc.params[0] << ") Table or sub-table is not loaded\n";
+					this->err = 1;
 				}
 				else
 				{
@@ -350,6 +356,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 					if(this->subtables.find(fc.params[0]) == this->subtables.end())
 					{
 						std::cout << "ERROR: (While trying to set " << fc.params[0] << ") Table or sub-table is not loaded\n";
+						this->err = 1;
 					}
 					else
 					{
@@ -392,6 +399,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 					if(this->subtables.find(fc.params[0]) == this->subtables.end())
 					{
 						std::cout << "ERROR: (While trying to set " << fc.params[0] << ") Table or sub-table is not loaded\n";
+						this->err = 1;
 					}
 					else
 					{
@@ -399,7 +407,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 						for(int i = 0; i < this->subtables[fc.params[0]]->rows.size(); i++)
 						{
 							if(fc.params[2] == "[INDEX]")
-								this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = std::to_string(i);
+								this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = std::to_string(i); // This is an edge case for something like set(table, [INDEX])
 							else
 								this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = fc.params[2];
 						}
@@ -411,7 +419,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 					for(int i = 1; i < this->tables[fc.params[0]]->table.size(); i++)
 					{
 						if(fc.params[2] == "[INDEX]")
-							this->tables[fc.params[0]]->table[i][col_index] = std::to_string(i);
+							this->tables[fc.params[0]]->table[i][col_index] = std::to_string(i); // This is an edge case for something like set(table, [INDEX])
 						else
 							this->tables[fc.params[0]]->table[i][col_index] = fc.params[2];
 					}
@@ -426,10 +434,11 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 				if(this->subtables.find(fc.params[0]) == this->subtables.end())
 				{
 					std::cout << "ERROR: (While trying to print " << fc.params[0] << ") Could not retrieve sub-table\n";
+					this->err = 1;
 				}
 				else
 				{
-					// TODO slower than yo mom
+					// TODO this implementation is slower than your mother
 					std::vector<std::vector<std::string>> table;
 					for(int i = 0; i < this->subtables[fc.params[0]]->target->table.size(); i++)
 					{
@@ -464,28 +473,36 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			this->tables[fc.params[0]]->table.push_back(new_row);
 			break;
 		}
-		case db::script::FunctionID::SETSORT:
+		case db::script::FunctionID::SORTRULE:
 		{
-			// TODO
+			int index = this->tables.at(fc.params[0])->get_col_index(fc.params[1]);
+			if(index == -1)
+			{
+				std::cout << "ERROR: (While trying to set sortrule for " << fc.params[0] << ") No column " << fc.params[1] << "\n";
+				this->err = 1;
+				break;
+			}
+			this->tables.at(fc.params[0])->sort_rule.column_index = index;
+			this->tables.at(fc.params[0])->sort_rule.ascending = (fc.params[2] != "0");
 			break;
 		}
 		case db::script::FunctionID::SORT:
 		{
-			// TODO
 			if(this->tables.find(fc.params[0]) == this->tables.end())
 			{
 				if(this->subtables.find(fc.params[0]) == this->subtables.end())
 				{
 					std::cout << "ERROR: (While trying to sort " << fc.params[0] << ") Table or sub-table is not loaded\n";
+					this->err = 1;
 				}
 				else
 				{
-					
+					this->subtables.at(fc.params[0])->sort();
 				}
 			}
 			else
 			{
-				
+				this->tables.at(fc.params[0])->sort();
 			}
 			break;
 		}
@@ -569,11 +586,12 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 
 	if(operation == "!")
 	{
-		if(this->is_number(operand2))
+		if(db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand2))
+			if(db::utils::is_float(operand2))
 			{
 				std::cout << "ERROR: (While trying to evaluate !" << operand2 << ") Cannot NOT a float\n";
+				this->err = 1;
 				return "NULL";
 			}
 			else
@@ -582,14 +600,15 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		else
 		{
 			std::cout << "ERROR: (While trying to evaluate !" << operand2 << ") Cannot NOT a string\n";
+			this->err = 1;
 			return "NULL";
 		}
 	}
 	else if(operation == "+")
 	{
-		if(this->is_number(operand1) && this->is_number(operand2))
+		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand1) || this->is_float(operand2))
+			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
 				return std::to_string((double)(std::stod(operand1) + std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) + std::stoll(operand2))); // int (long long)
@@ -601,9 +620,9 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	}
 	else if(operation == "-")
 	{
-		if(this->is_number(operand1) && this->is_number(operand2))
+		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand1) || this->is_float(operand2))
+			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
 				return std::to_string((double)(std::stod(operand1) - std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) - std::stoll(operand2))); // int (long long)
@@ -611,14 +630,15 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		else
 		{
 			std::cout << "ERROR: (While trying to evaluate " << operand1 << " - " << operand2 << ") Cannot substract two strings\n";
+			this->err = 1;
 			return "NULL";
 		}
 	}
 	else if(operation == "*")
 	{
-		if(this->is_number(operand1) && this->is_number(operand2))
+		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand1) || this->is_float(operand2))
+			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
 				return std::to_string((double)(std::stod(operand1) * std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) * std::stoll(operand2))); // int (long long)
@@ -626,14 +646,15 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		else
 		{
 			std::cout << "ERROR: (While trying to evaluate " << operand1 << " * " << operand2 << ") Cannot multiply two strings\n";
+			this->err = 1;
 			return "NULL";
 		}
 	}
 	else if(operation == "/")
 	{
-		if(this->is_number(operand1) && this->is_number(operand2))
+		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand1) || this->is_float(operand2))
+			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
 				return std::to_string((double)(std::stod(operand1) / std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) / std::stoll(operand2))); // int (long long)
@@ -641,29 +662,34 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		else
 		{
 			std::cout << "ERROR: (While trying to evaluate " << operand1 << " / " << operand2 << ") Cannot divide two strings\n";
+			this->err = 1;
 			return "NULL";
 		}
 	}
 	else if(operation == "%")
 	{
-		if(this->is_number(operand1) && this->is_number(operand2))
+		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand1) || this->is_float(operand2))
+			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+			{
 				std::cout << "ERROR: (While trying to evaluate " << operand1 << " % " << operand2 << ") Cannot mod floating point numbers\n";
+				this->err = 1;
+			}
 			else
 				return std::to_string((long long)(std::stoll(operand1) % std::stoll(operand2))); // int (long long)
 		}
 		else
 		{
 			std::cout << "ERROR: (While trying to evaluate " << operand1 << " % " << operand2 << ") Cannot mod strings\n";
+			this->err = 1;
 			return "NULL";
 		}
 	}
 	else if(operation == "^")
 	{
-		if(this->is_number(operand1) && this->is_number(operand2))
+		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand1) || this->is_float(operand2))
+			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
 				return std::to_string(std::pow(std::stod(operand1), std::stod(operand2)));
 			else
 				return std::to_string((long long)(std::pow(std::stoll(operand1), std::stoll(operand2)))); // int (long long)
@@ -671,6 +697,7 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		else
 		{
 			std::cout << "ERROR: (While trying to evaluate " << operand1 << " ^ " << operand2 << ") Cannot pow two strings\n";
+			this->err = 1;
 			return "NULL";
 		}
 	}
@@ -684,9 +711,9 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	}
 	else if(operation == ">")
 	{
-		if(this->is_number(operand1) && this->is_number(operand2))
+		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand1) || this->is_float(operand2))
+			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
 				return std::to_string((float)(std::stod(operand1) > std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) > std::stoll(operand2))); // int (long long)
@@ -699,9 +726,9 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	}
 	else if(operation == "<")
 	{
-		if(this->is_number(operand1) && this->is_number(operand2))
+		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand1) || this->is_float(operand2))
+			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
 				return std::to_string((float)(std::stod(operand1) < std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) < std::stoll(operand2))); // int (long long)
@@ -714,9 +741,9 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	}
 	else if(operation == ">=")
 	{
-		if(this->is_number(operand1) && this->is_number(operand2))
+		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand1) || this->is_float(operand2))
+			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
 				return std::to_string((float)(std::stod(operand1) >= std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) >= std::stoll(operand2))); // int (long long)
@@ -729,9 +756,9 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	}
 	else if(operation == "<=")
 	{
-		if(this->is_number(operand1) && this->is_number(operand2))
+		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 		{
-			if(this->is_float(operand1) || this->is_float(operand2))
+			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
 				return std::to_string((float)(std::stod(operand1) <= std::stod(operand2))); // double
 			else
 				return std::to_string((long long)(std::stoll(operand1) <= std::stoll(operand2))); // int (long long)
@@ -746,42 +773,42 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	return "0";
 }
 
-bool db::interpreter::Context::is_int(std::string str)
-{
-	for(int i = 0; i < str.length(); i++)
-	{
-		if(str[i] < '0' || str[i] > '9')
-		{
-			return false;
-		}
-	}
-	return true;
-}
+// bool db::interpreter::Context::is_int(std::string str)
+// {
+// 	for(int i = 0; i < str.length(); i++)
+// 	{
+// 		if(str[i] < '0' || str[i] > '9')
+// 		{
+// 			return false;
+// 		}
+// 	}
+// 	return true;
+// }
 
-bool db::interpreter::Context::is_float(std::string str)
-{
-	bool dot_found = false;
-	for(int i = 0; i < str.length(); i++)
-	{
-		if(str[i] == '.')
-		{
-			if(dot_found)
-			{
-				return false;
-			}
-			dot_found = true;
-		} else if(str[i] < '0' || str[i] > '9')
-		{
-			return false;
-		}
-	}
-	return dot_found;
-}
+// bool db::interpreter::Context::is_float(std::string str)
+// {
+// 	bool dot_found = false;
+// 	for(int i = 0; i < str.length(); i++)
+// 	{
+// 		if(str[i] == '.')
+// 		{
+// 			if(dot_found)
+// 			{
+// 				return false;
+// 			}
+// 			dot_found = true;
+// 		} else if(str[i] < '0' || str[i] > '9')
+// 		{
+// 			return false;
+// 		}
+// 	}
+// 	return dot_found;
+// }
 
-bool db::interpreter::Context::is_number(std::string str)
-{
-	return this->is_int(str) || this->is_float(str);
-}
+// bool db::interpreter::Context::is_number(std::string str)
+// {
+// 	return db::utils::is_int(str) || db::utils::is_float(str);
+// }
 
 void db::interpreter::Context::run(std::string line)
 {

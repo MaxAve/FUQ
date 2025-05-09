@@ -2,6 +2,8 @@
 
 db::table::Table::Table(std::string file)
 {
+	this->sort_rule = {true, 0};
+
 	if(file.substr(file.length() - 4, 4) == ".csv")
 	{
 		std::ifstream f(file);
@@ -44,11 +46,10 @@ db::table::SubTable::SubTable(Table* target)
 
 size_t db::table::Table::get_col_index(std::string col_name)
 {
-	int col_index = 0;
 	for(int i = 0; i < this->table[0].size(); i++)
 		if(this->table[0][i] == col_name)
 			return i;
-	return 0;
+	return -1;
 }
 
 void db::table::Table::print()
@@ -210,19 +211,40 @@ void db::table::Table::set(std::string col, std::string value)
 		this->table[i][col_index] = value;
 }
 
-// void db::table::SubTable::set(std::string col, std::string value)
-// {
-// 	// TODO this is ass
-// 	int col_index = 0;
-// 	for(int i = 0; i < this->target->table[0].size(); i++)
-// 	{
-// 		if(this->target->table[0][i] == col)
-// 		{
-// 			col_index = i;
-// 			break;
-// 		}
-// 	}
+void db::table::Table::sort()
+{
+	// TODO this is slower that your GRANDMOTHER
+	bool sorted = false;
+	while(!sorted)
+	{
+		sorted = true;
+		for(int i = 1; i < this->table.size() - 1; i++)
+		{
+			if(this->sort_rule.ascending)
+			{
+				if(db::utils::is_greater(this->table[i][this->sort_rule.column_index], this->table[i + 1][this->sort_rule.column_index]))
+				{
+					auto tmp = this->table[i];
+					this->table[i] = this->table[i + 1];
+					this->table[i + 1] = tmp;
+					sorted = false;
+				}
+			}
+			else
+			{
+				if(db::utils::is_greater(this->table[i + 1][this->sort_rule.column_index], this->table[i][this->sort_rule.column_index]))
+				{
+					auto tmp = this->table[i];
+					this->table[i] = this->table[i + 1];
+					this->table[i + 1] = tmp;
+					sorted = false;
+				}
+			}
+		}
+	}
+}
 
-// 	for(int i = 1; i < this->rows.size(); i++)
-// 		this->target->table[this->rows[i]][col_index] = value;
-// }
+void db::table::SubTable::sort()
+{
+	std::cout << "TODO: SubTable::sort()\n";
+}

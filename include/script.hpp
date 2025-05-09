@@ -61,7 +61,7 @@ enum FunctionID
     INSERT,
     ERASE,
     SORT,
-    SETSORT,
+    SORTRULE,
     HELP,
 };
 

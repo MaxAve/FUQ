@@ -1,10 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-
-#include <table.hpp>
-#include <script.hpp>
-#include <parser.hpp>
 #include <cli.hpp>
 #include <interpreter.hpp>
 
@@ -16,6 +12,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
+		int line_number = 1;
 		std::string path(argv[1]);
 		db::interpreter::Context ctx;
 		std::ifstream file(path);
@@ -24,6 +21,12 @@ int main(int argc, char** argv)
 			while(getline(file, line))
 			{
 				ctx.run(line);
+				if(ctx.err)
+				{
+					std::cout << "   " << line_number << " |      " << line << "\n";
+					return 0;
+				}
+				line_number++;
 			}
 			file.close();
 		}
