@@ -521,10 +521,12 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 
 std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &lambda)
 {
-	for(auto& it : lambda.params)
-	{
-		std::cout << it.first << " : \"" << it.second << "\"\n";
-	}
+	// for(auto& it : lambda.params)
+	// {
+	// 	std::cout << it.first << " : \"" << it.second << "\"\n";
+	// }
+
+	//lambda.code.print();
 
 	// Sanitize values
 	// TODO may not be a terrible idea to encapsulate this somehow
@@ -573,7 +575,7 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	if(lambda.code.children[2].type == db::script::TokenType::EXPRESSION)
 	{
 		db::interpreter::Lambda l = {lambda.params, lambda.code.children[2]};
-		operand1 = this->evaluate_lambda(l);
+		operand2 = this->evaluate_lambda(l);
 	}
 	else
 	{
@@ -584,192 +586,199 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 			if(lambda.params.find(x) != lambda.params.end())
 				operand2 = lambda.params[x];
 		}
-	}
+	}	
 
-	if(operation == "!")
+	try
 	{
-		if(db::utils::is_number(operand2))
+		if(operation == "!")
 		{
-			if(db::utils::is_float(operand2))
+			if(db::utils::is_number(operand2))
 			{
-				std::cout << "ERROR: (While trying to evaluate !" << operand2 << ") Cannot NOT a float\n";
+				if(db::utils::is_float(operand2))
+				{
+					std::cout << "ERROR: (While trying to evaluate !" << operand2 << ") Cannot NOT a float\n";
+					this->err = 1;
+					return "NULL";
+				}
+				else
+					return std::stoll(operand2) != 0 ? "0" : "1";
+			}
+			else
+			{
+				std::cout << "ERROR: (While trying to evaluate !" << operand2 << ") Cannot NOT a string\n";
 				this->err = 1;
 				return "NULL";
 			}
-			else
-				return std::stoll(operand2) != 0 ? "0" : "1";
 		}
-		else
+		else if(operation == "+")
 		{
-			std::cout << "ERROR: (While trying to evaluate !" << operand2 << ") Cannot NOT a string\n";
-			this->err = 1;
-			return "NULL";
-		}
-	}
-	else if(operation == "+")
-	{
-		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
-		{
-			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
-				return std::to_string((double)(std::stod(operand1) + std::stod(operand2))); // double
-			else
-				return std::to_string((long long)(std::stoll(operand1) + std::stoll(operand2))); // int (long long)
-		}
-		else
-		{
-			return operand1 + operand2; // string (concat)
-		}
-	}
-	else if(operation == "-")
-	{
-		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
-		{
-			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
-				return std::to_string((double)(std::stod(operand1) - std::stod(operand2))); // double
-			else
-				return std::to_string((long long)(std::stoll(operand1) - std::stoll(operand2))); // int (long long)
-		}
-		else
-		{
-			std::cout << "ERROR: (While trying to evaluate " << operand1 << " - " << operand2 << ") Cannot substract two strings\n";
-			this->err = 1;
-			return "NULL";
-		}
-	}
-	else if(operation == "*")
-	{
-		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
-		{
-			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
-				return std::to_string((double)(std::stod(operand1) * std::stod(operand2))); // double
-			else
-				return std::to_string((long long)(std::stoll(operand1) * std::stoll(operand2))); // int (long long)
-		}
-		else
-		{
-			std::cout << "ERROR: (While trying to evaluate " << operand1 << " * " << operand2 << ") Cannot multiply two strings\n";
-			this->err = 1;
-			return "NULL";
-		}
-	}
-	else if(operation == "/")
-	{
-		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
-		{
-			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
-				return std::to_string((double)(std::stod(operand1) / std::stod(operand2))); // double
-			else
-				return std::to_string((long long)(std::stoll(operand1) / std::stoll(operand2))); // int (long long)
-		}
-		else
-		{
-			std::cout << "ERROR: (While trying to evaluate " << operand1 << " / " << operand2 << ") Cannot divide two strings\n";
-			this->err = 1;
-			return "NULL";
-		}
-	}
-	else if(operation == "%")
-	{
-		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
-		{
-			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+			if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
 			{
-				std::cout << "ERROR: (While trying to evaluate " << operand1 << " % " << operand2 << ") Cannot mod floating point numbers\n";
-				this->err = 1;
+				if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+					return std::to_string((double)(std::stod(operand1) + std::stod(operand2))); // double
+				else
+					return std::to_string((long long)(std::stoll(operand1) + std::stoll(operand2))); // int (long long)
 			}
 			else
-				return std::to_string((long long)(std::stoll(operand1) % std::stoll(operand2))); // int (long long)
+			{
+				return operand1 + operand2; // string (concat)
+			}
 		}
-		else
+		else if(operation == "-")
 		{
-			std::cout << "ERROR: (While trying to evaluate " << operand1 << " % " << operand2 << ") Cannot mod strings\n";
-			this->err = 1;
-			return "NULL";
-		}
-	}
-	else if(operation == "^")
-	{
-		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
-		{
-			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
-				return std::to_string(std::pow(std::stod(operand1), std::stod(operand2)));
+			if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
+			{
+				if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+					return std::to_string((double)(std::stod(operand1) - std::stod(operand2))); // double
+				else
+					return std::to_string((long long)(std::stoll(operand1) - std::stoll(operand2))); // int (long long)
+			}
 			else
-				return std::to_string((long long)(std::pow(std::stoll(operand1), std::stoll(operand2)))); // int (long long)
+			{
+				std::cout << "ERROR: (While trying to evaluate " << operand1 << " - " << operand2 << ") Cannot substract two strings\n";
+				this->err = 1;
+				return "NULL";
+			}
 		}
-		else
+		else if(operation == "*")
 		{
-			std::cout << "ERROR: (While trying to evaluate " << operand1 << " ^ " << operand2 << ") Cannot pow two strings\n";
-			this->err = 1;
-			return "NULL";
-		}
-	}
-	else if(operation == "==")
-	{
-		return (operand1 == operand2) ? "1" : "0";
-	}
-	else if(operation == "!=")
-	{
-		return (operand1 == operand2) ? "1" : "0";
-	}
-	else if(operation == ">")
-	{
-		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
-		{
-			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
-				return std::to_string((float)(std::stod(operand1) > std::stod(operand2))); // double
+			if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
+			{
+				if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+					return std::to_string((double)(std::stod(operand1) * std::stod(operand2))); // double
+				else
+					return std::to_string((long long)(std::stoll(operand1) * std::stoll(operand2))); // int (long long)
+			}
 			else
-				return std::to_string((long long)(std::stoll(operand1) > std::stoll(operand2))); // int (long long)
+			{
+				std::cout << "ERROR: (While trying to evaluate " << operand1 << " * " << operand2 << ") Cannot multiply two strings\n";
+				this->err = 1;
+				return "NULL";
+			}
 		}
-		else
+		else if(operation == "/")
 		{
-			// TODO strings
-			return "1";
+			if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
+			{
+				if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+					return std::to_string((double)(std::stod(operand1) / std::stod(operand2))); // double
+				else
+					return std::to_string((long long)(std::stoll(operand1) / std::stoll(operand2))); // int (long long)
+			}
+			else
+			{
+				std::cout << "ERROR: (While trying to evaluate " << operand1 << " / " << operand2 << ") Cannot divide two strings\n";
+				this->err = 1;
+				return "NULL";
+			}
+		}
+		else if(operation == "%")
+		{
+			if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
+			{
+				if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+				{
+					std::cout << "ERROR: (While trying to evaluate " << operand1 << " % " << operand2 << ") Cannot mod floating point numbers\n";
+					this->err = 1;
+				}
+				else
+					return std::to_string((long long)(std::stoll(operand1) % std::stoll(operand2))); // int (long long)
+			}
+			else
+			{
+				std::cout << "ERROR: (While trying to evaluate " << operand1 << " % " << operand2 << ") Cannot mod strings\n";
+				this->err = 1;
+				return "NULL";
+			}
+		}
+		else if(operation == "^")
+		{
+			if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
+			{
+				if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+					return std::to_string(std::pow(std::stod(operand1), std::stod(operand2)));
+				else
+					return std::to_string((long long)(std::pow(std::stoll(operand1), std::stoll(operand2)))); // int (long long)
+			}
+			else
+			{
+				std::cout << "ERROR: (While trying to evaluate " << operand1 << " ^ " << operand2 << ") Cannot pow two strings\n";
+				this->err = 1;
+				return "NULL";
+			}
+		}
+		else if(operation == "==")
+		{
+			return (operand1 == operand2) ? "1" : "0";
+		}
+		else if(operation == "!=")
+		{
+			return (operand1 == operand2) ? "1" : "0";
+		}
+		else if(operation == ">")
+		{
+			if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
+			{
+				if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+					return std::to_string((float)(std::stod(operand1) > std::stod(operand2))); // double
+				else
+					return std::to_string((long long)(std::stoll(operand1) > std::stoll(operand2))); // int (long long)
+			}
+			else
+			{
+				// TODO strings
+				return "1";
+			}
+		}
+		else if(operation == "<")
+		{
+			if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
+			{
+				if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+					return std::to_string((float)(std::stod(operand1) < std::stod(operand2))); // double
+				else
+					return std::to_string((long long)(std::stoll(operand1) < std::stoll(operand2))); // int (long long)
+			}
+			else
+			{
+				// TODO strings
+				return "1";
+			}
+		}
+		else if(operation == ">=")
+		{
+			if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
+			{
+				if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+					return std::to_string((float)(std::stod(operand1) >= std::stod(operand2))); // double
+				else
+					return std::to_string((long long)(std::stoll(operand1) >= std::stoll(operand2))); // int (long long)
+			}
+			else
+			{
+				// TODO strings
+				return "1";
+			}
+		}
+		else if(operation == "<=")
+		{
+			if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
+			{
+				if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
+					return std::to_string((float)(std::stod(operand1) <= std::stod(operand2))); // double
+				else
+					return std::to_string((long long)(std::stoll(operand1) <= std::stoll(operand2))); // int (long long)
+			}
+			else
+			{
+				// TODO strings
+				return "1";
+			}
 		}
 	}
-	else if(operation == "<")
+	catch(const std::exception& e)
 	{
-		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
-		{
-			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
-				return std::to_string((float)(std::stod(operand1) < std::stod(operand2))); // double
-			else
-				return std::to_string((long long)(std::stoll(operand1) < std::stoll(operand2))); // int (long long)
-		}
-		else
-		{
-			// TODO strings
-			return "1";
-		}
-	}
-	else if(operation == ">=")
-	{
-		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
-		{
-			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
-				return std::to_string((float)(std::stod(operand1) >= std::stod(operand2))); // double
-			else
-				return std::to_string((long long)(std::stoll(operand1) >= std::stoll(operand2))); // int (long long)
-		}
-		else
-		{
-			// TODO strings
-			return "1";
-		}
-	}
-	else if(operation == "<=")
-	{
-		if(db::utils::is_number(operand1) && db::utils::is_number(operand2))
-		{
-			if(db::utils::is_float(operand1) || db::utils::is_float(operand2))
-				return std::to_string((float)(std::stod(operand1) <= std::stod(operand2))); // double
-			else
-				return std::to_string((long long)(std::stoll(operand1) <= std::stoll(operand2))); // int (long long)
-		}
-		else
-		{
-			// TODO strings
-			return "1";
-		}
+		std::cout << "Encountered unexpected error while evaluating \"" << operand1 << "\" " << operation << " \"" << operand2 << "\"\n" << e.what() << "\n";
 	}
 
 	return "0";
