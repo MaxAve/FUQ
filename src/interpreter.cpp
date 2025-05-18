@@ -10,10 +10,6 @@ db::interpreter::AST::AST(const std::vector<token_t>& tokens)
 {
 	if(db::parser::get(tokens, 1) == "(")
 	{
-		/*
-		Function call
-		*/
-
 		this->type = db::script::FUNCTION_CALL;
 		this->value = tokens[0];
 
@@ -160,10 +156,10 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		return "";
 	}
 
-	db::interpreter::FCall fc;
-	fc.fid = db::script::function_infos.at(fcall.value).id;
-	fc.ret = this->call_stack.size(); // TODO
-	fc.stack_index = this->call_stack.size();
+	db::interpreter::FCall fc = {db::script::function_infos.at(fcall.value).id, {}, this->call_stack.size(), this->call_stack.size()};
+	// fc.fid = db::script::function_infos.at(fcall.value).id;
+	// fc.ret = this->call_stack.size(); // TODO
+	// fc.stack_index = this->call_stack.size();
 
 	// Check for the right amount of parameters and print an error message if the parameters don't match with what is expected
 	if(db::script::function_infos.at(fcall.value).expect_parameters >= 0 && fcall.children.size() != db::script::function_infos.at(fcall.value).expect_parameters)
@@ -252,6 +248,23 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		case db::script::FunctionID::LOAD:
 		{
 			this->load_table(fc.params[0], fc.params[1]);
+			break;
+		}
+		case db::script::FunctionID::CREATE:
+		{
+			if(fc.params.size() < 2)
+			{
+				std::cout << "ERROR: create expects at least 2 parameters but got " << fc.params.size() << "\n";
+				break;
+			}
+			if(this->tables.find(fc.params[0]) != this->tables.end())
+			{
+				std::cout << "ERROR: (While trying to create " << fc.params[0] << ") Table already exists\n";
+				break;
+			}
+			std::string tn = fc.params[0];
+			fc.params.erase(fc.params.begin());
+			this->tables[tn] = new db::table::Table(fc.params);
 			break;
 		}
 		case db::script::FunctionID::UNLOAD:
@@ -470,7 +483,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			std::vector<std::string> new_row;
 			for(int i = 1; i < fc.params.size(); i++)
 				new_row.push_back(fc.params[i]);
-			this->tables[fc.params[0]]->table.push_back(new_row);
+			this->tables[fc.params[0]]->insert(new_row);
 			break;
 		}
 		case db::script::FunctionID::SORTRULE:
@@ -526,10 +539,6 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	// 	std::cout << it.first << " : \"" << it.second << "\"\n";
 	// }
 
-	//lambda.code.print();
-
-	// Sanitize values
-	// TODO may not be a terrible idea to encapsulate this somehow
 	for(int i = 0; i < lambda.code.children.size(); i++)
 	{
 		// Truncate spaces
@@ -592,23 +601,21 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	{
 		if(operation == "!")
 		{
-			if(db::utils::is_number(operand2))
-			{
-				if(db::utils::is_float(operand2))
-				{
-					std::cout << "ERROR: (While trying to evaluate !" << operand2 << ") Cannot NOT a float\n";
-					this->err = 1;
-					return "NULL";
-				}
-				else
-					return std::stoll(operand2) != 0 ? "0" : "1";
-			}
-			else
-			{
-				std::cout << "ERROR: (While trying to evaluate !" << operand2 << ") Cannot NOT a string\n";
-				this->err = 1;
-				return "NULL";
-			}
+			if(operand2 != "0")
+				return "0";
+			return "1";
+		}
+		else if(operation == "&&")
+		{
+			if(operand1 != "0" && operand1 != "0")
+				return "1";
+			return "0";
+		}
+		else if(operation == "||")
+		{
+			if(operand1 != "0" || operand1 != "0")
+				return "1";
+			return "0";
 		}
 		else if(operation == "+")
 		{
@@ -784,53 +791,11 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 	return "0";
 }
 
-// bool db::interpreter::Context::is_int(std::string str)
-// {
-// 	for(int i = 0; i < str.length(); i++)
-// 	{
-// 		if(str[i] < '0' || str[i] > '9')
-// 		{
-// 			return false;
-// 		}
-// 	}
-// 	return true;
-// }
-
-// bool db::interpreter::Context::is_float(std::string str)
-// {
-// 	bool dot_found = false;
-// 	for(int i = 0; i < str.length(); i++)
-// 	{
-// 		if(str[i] == '.')
-// 		{
-// 			if(dot_found)
-// 			{
-// 				return false;
-// 			}
-// 			dot_found = true;
-// 		} else if(str[i] < '0' || str[i] > '9')
-// 		{
-// 			return false;
-// 		}
-// 	}
-// 	return dot_found;
-// }
-
-// bool db::interpreter::Context::is_number(std::string str)
-// {
-// 	return db::utils::is_int(str) || db::utils::is_float(str);
-// }
-
 void db::interpreter::Context::run(std::string line)
 {
 	std::string normalized = db::parser::normalize(line, ' ', true);
-	//std::cout << "=== NORMALIZED ===\n" << normalized << "\n";
-	
+
 	std::vector<std::string> tokens = db::parser::tokenize(normalized);
-	//std::cout << "=== TOKENIZER ===\n[";
-	//for(int i = 0; i < tokens.size() - 1; i++)
-	//	std::cout << "'" << tokens[i] << "', ";
-	//std::cout << "'" << tokens[tokens.size() - 1] << "']\n";
 
 	if(tokens.size() == 1 && tokens[0] == "flist")
 	{
@@ -838,8 +803,6 @@ void db::interpreter::Context::run(std::string line)
 	}
 
 	db::interpreter::AST ast(tokens);
-	//std::cout << "=== AST ===\n";
-	//ast.print();
 
 	switch(ast.type)
 	{

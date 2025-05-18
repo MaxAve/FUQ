@@ -27,6 +27,7 @@ public:
 	SortRule sort_rule;
     
 	Table(std::string file); // load
+	Table(std::vector<std::string> cols);
 
 	size_t get_col_index(std::string col_name);
 	
@@ -34,6 +35,7 @@ public:
 	void save(std::string path);
 	void set(std::string col, std::string value);
 	void sort();
+	void insert(std::vector<std::string> row);
 };
 
 class SubTable

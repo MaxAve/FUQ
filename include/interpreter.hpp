@@ -13,6 +13,7 @@ namespace db
 {
 namespace interpreter
 {
+// Abstract Syntax Tree node class
 class AST
 {
 public:
@@ -26,27 +27,30 @@ public:
     void print(int depth=0);
 };
 
+// Function call struct
 typedef struct
 {
-    db::script::FunctionID fid; // Type of function being executed
+    db::script::FunctionID fid;      // Type of function being executed
     std::vector<std::string> params; // Parameters passed to the function
-    uint8_t ret;
-	int stack_index;
+    size_t ret;
+	size_t stack_index;
 } FCall;
 
+// Lambda struct
 typedef struct
 {
     std::unordered_map<std::string, std::string> params;
     AST code;
 } Lambda;
 
+// Interpreter context class
 class Context
 {
 private:
-    std::unordered_map<std::string, db::table::Table*> tables;
-    std::unordered_map<std::string, db::table::SubTable*> subtables;
-    std::vector<Lambda> lambdas;
-    std::vector<FCall> call_stack;
+    std::unordered_map<std::string, db::table::Table*> tables;       // Loaded tables
+    std::unordered_map<std::string, db::table::SubTable*> subtables; // Loaded sub-tables
+    std::vector<Lambda> lambdas;                                     // Lambda stack
+    std::vector<FCall> call_stack;                                   // Function call stack
 public:
     uint32_t err = 0;
 
@@ -57,20 +61,16 @@ public:
 
     std::string evaluate_lambda(Lambda& lambda);
 
-    // bool is_int(std::string str);
-
-    // bool is_float(std::string str);
-
-    // bool is_number(std::string str);
-
     void run(std::string line);
 
-	// Utils
+	// This function was used for debugging
 	void print_call_stack();
 };
 
+// Returns true if the list of tokens can be interpreted as a string
 bool is_string(const std::vector<token_t>& tokens);
 
+// Returns true if the list of tokens can be interpreted as an expression
 bool is_expression(const std::vector<token_t>& tokens);
 } // namespace interpreter
 } // namespace db

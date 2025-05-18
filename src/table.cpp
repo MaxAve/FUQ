@@ -39,6 +39,12 @@ db::table::Table::Table(std::string file)
 	}
 }
 
+db::table::Table::Table(std::vector<std::string> cols)
+{
+	this->sort_rule = {true, 0};
+	this->table.push_back(cols);
+}
+
 db::table::SubTable::SubTable(Table* target)
 {
 	this->target = target;
@@ -222,38 +228,18 @@ void db::table::Table::set(std::string col, std::string value)
 
 void db::table::Table::sort()
 {
-	// TODO this is slower that your GRANDMOTHER
-	bool sorted = false;
-	while(!sorted)
-	{
-		sorted = true;
-		for(int i = 1; i < this->table.size() - 1; i++)
-		{
-			if(this->sort_rule.ascending)
-			{
-				if(db::utils::is_greater(this->table[i][this->sort_rule.column_index], this->table[i + 1][this->sort_rule.column_index]))
-				{
-					auto tmp = this->table[i];
-					this->table[i] = this->table[i + 1];
-					this->table[i + 1] = tmp;
-					sorted = false;
-				}
-			}
-			else
-			{
-				if(db::utils::is_greater(this->table[i + 1][this->sort_rule.column_index], this->table[i][this->sort_rule.column_index]))
-				{
-					auto tmp = this->table[i];
-					this->table[i] = this->table[i + 1];
-					this->table[i + 1] = tmp;
-					sorted = false;
-				}
-			}
-		}
-	}
+	auto first = this->table[0];
+	this->table.erase(this->table.begin());
+	this->table = db::utils::quicksort_table(this->table, this->sort_rule.column_index, this->sort_rule.ascending);
+	this->table.insert(this->table.begin(), first);
 }
 
 void db::table::SubTable::sort()
 {
 	std::cout << "TODO: SubTable::sort()\n";
+}
+
+void db::table::Table::insert(std::vector<std::string> row)
+{
+
 }
