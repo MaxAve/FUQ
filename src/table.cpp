@@ -39,6 +39,12 @@ db::table::Table::Table(std::string file)
 	}
 }
 
+db::table::Table::Table(std::vector<std::string> cols)
+{
+	this->sort_rule = {true, 0};
+	this->table.push_back(cols);
+}
+
 db::table::SubTable::SubTable(Table* target)
 {
 	this->target = target;
@@ -224,11 +230,16 @@ void db::table::Table::sort()
 {
 	auto first = this->table[0];
 	this->table.erase(this->table.begin());
-	this->table = db::utils::quicksort_table(this->table, this->sort_rule.column_index);
+	this->table = db::utils::quicksort_table(this->table, this->sort_rule.column_index, this->sort_rule.ascending);
 	this->table.insert(this->table.begin(), first);
 }
 
 void db::table::SubTable::sort()
 {
 	std::cout << "TODO: SubTable::sort()\n";
+}
+
+void db::table::Table::insert(std::vector<std::string> row)
+{
+
 }

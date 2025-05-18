@@ -7,6 +7,7 @@ namespace db
 {
 namespace cli
 {
+// Run CLI
 void run();
 } // namespace cli
 } // namespace db

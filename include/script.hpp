@@ -16,7 +16,7 @@ enum TokenType
     EXPRESSION,
 };
 
-// Operation types
+// Operators
 enum OperationType
 {
     ADD,
@@ -39,6 +39,7 @@ enum OperationType
     FUNC_PARAM_DELIMITER,
 };
 
+// Map operator string : operator type
 extern const std::unordered_map<std::string, OperationType> operators;
 
 typedef struct
@@ -49,11 +50,13 @@ typedef struct
 
 extern const std::unordered_map<OperationType, OPInfo> operator_info;
 
+// Literally every function you will ever need
 enum FunctionID
 {
 	PRINTT,
     PRINTS,
     LOAD,
+    CREATE,
 	UNLOAD,
     SAVE,
     SET,
@@ -68,7 +71,7 @@ enum FunctionID
 typedef struct
 {
     FunctionID id;
-    int expect_parameters;
+    int expect_parameters; // Number of parameters expected
 } FunctionInfo;
 
 extern const std::unordered_map<std::string, FunctionInfo> function_infos;
