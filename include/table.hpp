@@ -22,7 +22,7 @@ typedef struct
 class Table
 {
 public:
-	std::vector<std::vector<std::string>> table; // TODO optimize
+	std::vector<std::vector<std::string>> table;
 
 	SortRule sort_rule;
     
@@ -30,7 +30,7 @@ public:
 	Table(std::vector<std::string> cols);
 
 	size_t get_col_index(std::string col_name);
-	
+
 	void print();
 	void save(std::string path);
 	void set(std::string col, std::string value);

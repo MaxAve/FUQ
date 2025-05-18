@@ -316,6 +316,13 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 						}
 
 						this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(this->subtables[fc.params[0]]->rows[i]);
+						
+						/*for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
+						{
+							this->lambdas[this->lambdas.size() - 1].params[std::string("MAX_") + this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->max_val[this->subtables[fc.params[0]]->target->table[0][j]]; 
+							this->lambdas[this->lambdas.size() - 1].params[std::string("MIN_") + this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->min_val[this->subtables[fc.params[0]]->target->table[0][j]]; 
+							this->lambdas[this->lambdas.size() - 1].params[std::string("AVG_") + this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->avg_val[this->subtables[fc.params[0]]->target->table[0][j]]; 
+						}*/
 
 						if(db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]) == "1")
 						{
@@ -381,7 +388,15 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 							{
 								this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
 							}
+							
 							this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
+							/*for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
+							{
+								this->lambdas[this->lambdas.size() - 1].params[std::string("MAX_") + this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->max_val[this->subtables[fc.params[0]]->target->table[0][j]]; 
+								this->lambdas[this->lambdas.size() - 1].params[std::string("MIN_") + this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->min_val[this->subtables[fc.params[0]]->target->table[0][j]]; 
+								this->lambdas[this->lambdas.size() - 1].params[std::string("AVG_") + this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->avg_val[this->subtables[fc.params[0]]->target->table[0][j]]; 
+							}*/
+
 							this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][col_index] = db::interpreter::Context::evaluate_lambda(this->lambdas[this->lambdas.size() - 1]);
 						}
 
@@ -607,13 +622,13 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 		}
 		else if(operation == "&&")
 		{
-			if(operand1 != "0" && operand1 != "0")
+			if(operand1 != "0" && operand2 != "0")
 				return "1";
 			return "0";
 		}
 		else if(operation == "||")
 		{
-			if(operand1 != "0" || operand1 != "0")
+			if(operand1 != "0" || operand2 != "0")
 				return "1";
 			return "0";
 		}
@@ -803,6 +818,8 @@ void db::interpreter::Context::run(std::string line)
 	}
 
 	db::interpreter::AST ast(tokens);
+
+	ast.print();
 
 	switch(ast.type)
 	{
