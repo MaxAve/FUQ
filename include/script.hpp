@@ -65,6 +65,7 @@ enum FunctionID
     ERASE,
     SORT,
     SORTRULE,
+    JOIN,
     HELP,
 };
 

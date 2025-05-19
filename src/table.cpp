@@ -241,5 +241,31 @@ void db::table::SubTable::sort()
 
 void db::table::Table::insert(std::vector<std::string> row)
 {
+	// Binary search + insert
 
+	size_t l = 1;
+	size_t r = this->table.size() - 1;
+	
+	if(this->sort_rule.ascending)
+	{
+		while(r != l)
+		{
+			if(db::utils::is_greater(row[this->sort_rule.column_index], this->table[l][this->sort_rule.column_index]))
+				l = (r + l) / 2;
+			else
+				r = (r + l) / 2;
+		}
+	}
+	else
+	{
+		while(r != l)
+		{
+			if(db::utils::is_greater(row[this->sort_rule.column_index], this->table[l][this->sort_rule.column_index]))
+				r = (r + l) / 2;
+			else
+				l = (r + l) / 2;
+		}
+	}
+
+	this->table.insert(this->table.begin() + l, row);
 }

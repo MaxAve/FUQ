@@ -447,7 +447,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 					for(int i = 1; i < this->tables[fc.params[0]]->table.size(); i++)
 					{
 						if(fc.params[2] == "[INDEX]")
-							this->tables[fc.params[0]]->table[i][col_index] = std::to_string(i); // This is an edge case for something like set(table, [INDEX])
+							this->tables[fc.params[0]]->table[i][col_index] = std::to_string(i); // This is an edge case for something like set(table, [INDEX]), since without any operators, [INDEX] would normally be parsed as a string
 						else
 							this->tables[fc.params[0]]->table[i][col_index] = fc.params[2];
 					}
@@ -494,11 +494,14 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		}
 		case db::script::FunctionID::INSERT:
 		{
-			// TODO insert it sorted
-			std::vector<std::string> new_row;
-			for(int i = 1; i < fc.params.size(); i++)
-				new_row.push_back(fc.params[i]);
-			this->tables[fc.params[0]]->insert(new_row);
+			if(this->tables.find(fc.params[0]) == this->tables.end())
+			{
+				std::cout << "ERROR: (While trying to insert new row into " << fc.params[0] << ") No table loaded\n";
+				break;
+			}
+			std::vector<std::string> new_row = fc.params;
+			new_row.erase(new_row.begin());
+			this->tables.at(fc.params[0])->insert(new_row);
 			break;
 		}
 		case db::script::FunctionID::SORTRULE:
@@ -531,6 +534,73 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			else
 			{
 				this->tables.at(fc.params[0])->sort();
+			}
+			break;
+		}
+		case db::script::FunctionID::JOIN:
+		{
+			if(this->tables.find(fc.params[1]) == this->tables.end())
+			{
+				std::cout << "ERROR: (While trying to join " << fc.params[0] << " and " << fc.params[1] << ") Table (" << fc.params[0] << ") not loaded\n";
+				this->err = 1;
+			}
+			else
+			{
+				if(fc.params[2] != "0")
+				{
+					// Join and sort
+					// TODO smarter join function
+					if(this->tables.find(fc.params[1]) == this->tables.end())
+					{
+						if(this->subtables.find(fc.params[1]) == this->subtables.end())
+						{
+							std::cout << "ERROR: (While trying to join " << fc.params[0] << " and " << fc.params[1] << ") Table or sub-table is not loaded\n";
+							this->err = 1;
+						}
+						else
+						{
+							for(int i = 0; i < this->subtables.at(fc.params[1])->rows.size(); i++)
+							{
+								this->tables.at(fc.params[0])->insert(this->subtables.at(fc.params[1])->target->table[this->subtables.at(fc.params[1])->rows[i]]);
+							}
+						}
+					}
+					else
+					{
+						const size_t s = this->tables.at(fc.params[1])->table.size(); // Prevents infinite loop
+						for(int i = 1; i < s; i++)
+						{
+							this->tables.at(fc.params[0])->insert(this->tables.at(fc.params[1])->table[i]);
+						}
+					}
+				}
+				else
+				{
+					// Join without sorting
+					if(this->tables.find(fc.params[1]) == this->tables.end())
+					{
+						if(this->subtables.find(fc.params[1]) == this->subtables.end())
+						{
+							std::cout << "ERROR: (While trying to join " << fc.params[0] << " and " << fc.params[1] << ") Table or sub-table is not loaded\n";
+							this->err = 1;
+						}
+						else
+						{
+							for(int i = 0; i < this->subtables.at(fc.params[1])->rows.size(); i++)
+							{
+								this->tables.at(fc.params[0])->table.push_back(this->subtables.at(fc.params[1])->target->table[this->subtables.at(fc.params[1])->rows[i]]);
+							}
+						}
+					}
+					else
+					{
+						const size_t s = this->tables.at(fc.params[1])->table.size(); // Prevents infinite loop
+						for(int i = 1; i < s; i++)
+						{
+							this->tables.at(fc.params[0])->table.push_back(this->tables.at(fc.params[1])->table[i]);
+						}
+					}
+				}
 			}
 			break;
 		}
@@ -819,7 +889,7 @@ void db::interpreter::Context::run(std::string line)
 
 	db::interpreter::AST ast(tokens);
 
-	ast.print();
+	//ast.print();
 
 	switch(ast.type)
 	{
