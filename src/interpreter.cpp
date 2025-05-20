@@ -867,6 +867,30 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 				return "1";
 			}
 		}
+		else if(operation == ".")
+		{
+			int index = std::stoi(operand2);
+			if(index < 0 || index >= operand1.length())
+			{
+				std::cout << "ERROR: (While trying to evaluate " << operand1 << " . " << operand2 << ") Index out of range\n";
+				return "";
+			}
+			return std::string(1, operand1[index]);
+		}
+		else if(operation == "$")
+		{
+			int index = std::stoi(operand2);
+			if(index < 0 || index >= operand1.length())
+			{
+				std::cout << "ERROR: (While trying to evaluate " << operand1 << " -> " << operand2 << ") Index out of range\n";
+				return "";
+			}
+			return operand1.substr(index, operand1.length() - index);
+		}
+		else if(operation == ":")
+		{
+			return operand1.substr(0, std::min(std::stoi(operand2), (int)operand1.length()));
+		}
 	}
 	catch(const std::exception& e)
 	{
@@ -889,7 +913,7 @@ void db::interpreter::Context::run(std::string line)
 
 	db::interpreter::AST ast(tokens);
 
-	//ast.print();
+	ast.print();
 
 	switch(ast.type)
 	{
