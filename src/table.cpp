@@ -10,20 +10,58 @@ db::table::Table::Table(std::string file)
 
 		std::string line;
 
+		int linenum = 0;
+
 		if(f.is_open())
 		{
 			while(std::getline(f, line))
 			{
+				linenum++;
+
 				this->table.push_back(std::vector<std::string>());
 				this->table[this->table.size() - 1].push_back("");
+				
 				for(int i = 0; i < line.length(); i++)
 				{
+					if(line[i] == '\\')
+					{
+						if(i == line.length() - 1)
+						{
+							std::cout << "ERROR: (While trying to open " << file << ") Expected escape sequence character after \\ at line " << linenum << "\n";
+							return;
+						}
+						if(line[i + 1] == '\\')
+						{
+							this->table[this->table.size() - 1][this->table[this->table.size() - 1].size() - 1] += '\\';
+							i++;
+							continue;
+						}
+						else if(line[i + 1] == ',')
+						{
+							this->table[this->table.size() - 1][this->table[this->table.size() - 1].size() - 1] += ',';
+							i++;
+							continue;
+						}
+					}
+
 					if(line[i] == ',')
 					{
 						this->table[this->table.size() - 1].push_back("");
 						continue;
 					}
 					this->table[this->table.size() - 1][this->table[this->table.size() - 1].size() - 1] += line[i];
+				}
+
+				if(this->table[this->table.size() - 1][this->table[this->table.size() - 1].size() - 1].length() == 0)
+				{
+					this->table[this->table.size() - 1].pop_back();
+				}
+				
+				if(this->table.size() > 1 && this->table[this->table.size() - 1].size() != this->table[0].size())
+				{
+					std::cout << "ERROR: (While trying to open " << file << ") Could not parse line " << linenum << " because the number of columns (" << this->table[this->table.size() - 1].size() << ") does not equal the number of columns in the header (" << this->table[0].size() << ")\n";
+					this->table.pop_back();
+					return;
 				}
 			}
 			f.close();

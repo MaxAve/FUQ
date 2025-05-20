@@ -21,6 +21,8 @@ std::string filter(std::string str, char c, bool ignore_strings=false);
 // Example: normalize("aaaaaa bbbb ccc", 'a', false) -> "a bbbb ccc"
 std::string normalize(std::string str, char c, bool ignore_strings=false);
 
+int count_chars(std::string str, char c, bool ignore_strings=false);
+
 // Grabs operator at the provided index
 token_t get_operator(std::string str, int i);
 

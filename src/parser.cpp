@@ -60,6 +60,36 @@ std::string db::parser::normalize(std::string str, char c, bool ignore_strings)
 	return res;
 }
 
+int db::parser::count_chars(std::string str, char c, bool ignore_strings)
+{
+	int count = 0;
+
+	bool in_string = false;
+
+	for(int i = 0; i < str.length(); i++)
+	{
+		if(str[i] == '"')
+		{
+			in_string = !in_string;
+
+			if(i > 0)
+			{
+				if(str[i - 1] == '\\')
+				{
+					in_string = !in_string; // flip it back
+				}
+			}
+		}
+
+		if(!in_string && str[i] == c)
+		{
+			count++;
+		}
+	}
+
+	return count;
+}
+
 std::string db::parser::get_operator(std::string str, int i)
 {
 	std::string res = "";
