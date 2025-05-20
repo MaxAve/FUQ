@@ -1,0 +1,25 @@
+# The set function will iterate over every entry in the table OR sub-table
+# and overwrite the specified column with the provided value
+
+load("examples/table.csv", table)
+
+# You can use this to overwrite the whole table ...
+# set(table, Salary, 0)
+
+prints("Before:")
+printt(filter(table, [Department] == "HR"))
+
+# ... or use set together with filter for more control
+# This command will half every HR employee's salary :3
+set(filter(table, [Department] == "HR"), Salary, [Salary] / 2)
+
+prints("After:")
+printt(filter(table, [Department] == "HR"))
+
+# You can also do really whacky stuff like replacing every employee's last name
+# with the first two letters by using substring operators:
+# Note 1: The $ operator sets the starting index of the substring, : sets the length
+# Note 2: the +"." at the end appends a dot at the end
+set(table, Last Name, [Last Name]$0:2 + ".")
+
+printt(filter(table, [INDEX] <= 10)) # This will print the first 10 entries

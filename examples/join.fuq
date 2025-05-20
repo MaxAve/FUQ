@@ -1,0 +1,12 @@
+# You can append a table or sub-table to a table with the join function
+
+load("examples/table.csv", table)
+
+# Creates a new seperate table for Finance and Sales employees
+# Note: the 3rd parameter in the join function determines whether the
+# table/sub-table should be appended or inserted and sorted
+
+create(money_dudes, First Name,Last Name,Salary,Department,Age)
+join(money_dudes, filter(table, [Department] == Sales || [Department] == Finance), 0)
+
+printt(money_dudes)

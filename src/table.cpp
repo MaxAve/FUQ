@@ -279,6 +279,12 @@ void db::table::SubTable::sort()
 
 void db::table::Table::insert(std::vector<std::string> row)
 {
+    if(this->table.size() == 1)
+    {
+        this->table.push_back(row);
+        return;
+    }
+
 	// Binary search + insert
 
 	size_t l = 1;

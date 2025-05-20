@@ -1,0 +1,11 @@
+# Sorting works by setting a few simple rules using the sortrule function
+# The benefit of having a seperate function for this is that the join
+# function can use these rules to insert while sorting
+
+load("examples/table.csv", table)
+
+sortrule(table, Salary, 0) # Sort by Salary in descending order
+
+sort(table)
+
+printt(filter(table, [INDEX] <= 10)) # Print first 10 becasue the table is a bit too big

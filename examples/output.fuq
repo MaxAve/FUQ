@@ -1,0 +1,7 @@
+# Basic output
+
+load("examples/table.csv", table)
+
+printt(table)
+
+prints("You can also use prints to print normal messages")

@@ -1,0 +1,21 @@
+# Filtering using lambdas
+# FUQ allows you to create lambdas (we call them lambdas because they are ran
+# on every element in the table) to do things like filtering
+
+load("examples/table.csv", table)
+
+# This will create a "sub-table" that contains every entry from 'table' where 
+# the Age column is < 30. A sub-table is NOT a standalone table and acts
+# instead more like an array of pointers where each element points to a single
+# entry in the parent table. In this case, the sub-table will contain pointers
+# to every entry in table where the age is < 30
+
+# Note that column names must be placed in square brackets, otherwise they will
+# be interpreted as a string!
+
+printt(filter(table, [Age] < 30))
+
+# FUQ supports many kinds of operators which can be combined to create more
+# complex expressions:
+
+printt(filter(table, [Age] < 30 && [Department] == HR && [Salary] >= 36000))

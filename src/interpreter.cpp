@@ -386,9 +386,9 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 						{
 							for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
 							{
-								this->lambdas[this->lambdas.size() - 1].params[this->tables[fc.params[0]]->table[0][j]] = this->tables[fc.params[0]]->table[i][j];
+								this->lambdas[this->lambdas.size() - 1].params[this->subtables[fc.params[0]]->target->table[0][j]] = this->subtables[fc.params[0]]->target->table[this->subtables[fc.params[0]]->rows[i]][j];
 							}
-							
+
 							this->lambdas[this->lambdas.size() - 1].params["INDEX"] = std::to_string(i);
 							/*for(int j = 0; j < this->subtables[fc.params[0]]->target->table[0].size(); j++)
 							{
@@ -539,7 +539,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 		}
 		case db::script::FunctionID::JOIN:
 		{
-			if(this->tables.find(fc.params[1]) == this->tables.end())
+			if(this->tables.find(fc.params[0]) == this->tables.end())
 			{
 				std::cout << "ERROR: (While trying to join " << fc.params[0] << " and " << fc.params[1] << ") Table (" << fc.params[0] << ") not loaded\n";
 				this->err = 1;
@@ -913,7 +913,7 @@ void db::interpreter::Context::run(std::string line)
 
 	db::interpreter::AST ast(tokens);
 
-	ast.print();
+	//ast.print();
 
 	switch(ast.type)
 	{
