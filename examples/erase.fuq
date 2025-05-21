@@ -1,0 +1,8 @@
+load("examples/table.csv", table)
+
+erase(filter(table, [Salary] > 50000)) # Erase every entry where the salary is above 50000
+
+# If you really want to, you can also erase the whole table
+# erase(table)
+
+printt(table)

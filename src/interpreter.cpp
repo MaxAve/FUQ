@@ -107,6 +107,19 @@ void db::interpreter::AST::print(int depth)
 	}
 }
 
+db::interpreter::Context::~Context()
+{
+	std::vector<std::string> todelete;
+	for(auto& it : this->tables)
+	{
+		todelete.push_back(it.first);
+	}
+	for(int i = 0; i < todelete.size(); i++)
+	{
+		this->unload_table(todelete[i]);
+	}
+}
+
 bool db::interpreter::is_string(const std::vector<token_t>& tokens)
 {
 	return tokens[0][0] == '"' || tokens[0][0] == '\'';
@@ -922,5 +935,17 @@ void db::interpreter::Context::run(std::string line)
 			this->call_function(ast);
 			break;
 		}
+	}
+
+	// Clean up subtables
+	std::vector<std::string> subtables;
+	for(auto& it : this->subtables)
+	{
+		subtables.push_back(it.first);
+	}
+	for(int i = 0; i < subtables.size(); i++)
+	{
+		delete this->subtables[subtables[i]];
+		this->subtables.erase(subtables[i]);
 	}
 }

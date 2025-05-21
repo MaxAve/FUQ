@@ -17,8 +17,8 @@ namespace interpreter
 class AST
 {
 public:
-    db::script::TokenType type;
-    token_t value;
+    db::script::TokenType type; // Function, expression or value
+    token_t value; // This will only be set if the token is a value
     std::vector<AST> children;
 
     AST(std::string val);
@@ -32,6 +32,8 @@ typedef struct
 {
     db::script::FunctionID fid;      // Type of function being executed
     std::vector<std::string> params; // Parameters passed to the function
+    
+    // Do we even need this?
     size_t ret;
 	size_t stack_index;
 } FCall;
@@ -52,15 +54,20 @@ private:
     std::vector<Lambda> lambdas;                                     // Lambda stack
     std::vector<FCall> call_stack;                                   // Function call stack
 public:
-    uint32_t err = 0;
+    ~Context();
+
+    uint32_t err = 0; // If not set to 0, the interpreter will stop and not execute any further queries
 
 	void load_table(std::string file, std::string newname);
     void unload_table(std::string name);
 
+    // Call a function from an AST
 	std::string call_function(const AST& fcall);
 
+    // Evaluates a lambda and returns the result as a string
     std::string evaluate_lambda(Lambda& lambda);
 
+    // Parses, tokenizes, and runs a line of code
     void run(std::string line);
 
 	// This function was used for debugging
