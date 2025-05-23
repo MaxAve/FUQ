@@ -279,37 +279,74 @@ void db::table::SubTable::sort()
 
 void db::table::Table::insert(std::vector<std::string> row)
 {
-    if(this->table.size() == 1)
+	// Edge cases
+
+    if(this->table.size() <= 1)
     {
         this->table.push_back(row);
         return;
     }
 
-	// Binary search + insert
+	if(this->sort_rule.ascending && db::utils::is_greater(row[this->sort_rule.column_index], this->table[this->table.size() - 1][this->sort_rule.column_index]))
+	{
+		this->table.push_back(row);
+        return;
+	} 
 
-	size_t l = 1;
-	size_t r = this->table.size() - 1;
+	// Binary search
+
+	int low = 1;
+	int high = this->table.size() - 1;
 	
 	if(this->sort_rule.ascending)
 	{
-		while(r != l)
+		while(low < high)
 		{
-			if(db::utils::is_greater(row[this->sort_rule.column_index], this->table[l][this->sort_rule.column_index]))
-				l = (r + l) / 2;
+			int mid = ((high - low) / 2) + low;
+
+			if(db::utils::is_greater(this->table[mid][this->sort_rule.column_index], row[this->sort_rule.column_index]))
+            	high = mid - 1;
 			else
-				r = (r + l) / 2;
+				low = mid + 1;
 		}
 	}
 	else
 	{
-		while(r != l)
+		while(low < high)
 		{
-			if(db::utils::is_greater(row[this->sort_rule.column_index], this->table[l][this->sort_rule.column_index]))
-				r = (r + l) / 2;
+			int mid = ((high - low) / 2) + low;
+
+			if(db::utils::is_greater(row[this->sort_rule.column_index], this->table[mid][this->sort_rule.column_index]))
+            	high = mid - 1;
 			else
-				l = (r + l) / 2;
+				low = mid + 1;
 		}
 	}
 
-	this->table.insert(this->table.begin() + l, row);
+	// Insert
+	this->table.insert(this->table.begin() + low, row);
+
+	// Weird edge case
+	if(
+	low < (this->table.size() - 1)
+	&& this->sort_rule.ascending
+	&& db::utils::is_greater(this->table[low][this->sort_rule.column_index], this->table[low + 1][this->sort_rule.column_index]))
+	{
+		std::swap(this->table[low], this->table[low + 1]);
+	}
+	else if(
+	low < (this->table.size() - 1)
+	&& !this->sort_rule.ascending
+	&& db::utils::is_greater(this->table[low + 1][this->sort_rule.column_index], this->table[low][this->sort_rule.column_index]))
+	{
+		std::swap(this->table[low], this->table[low + 1]);
+	}
 }
+
+/*
+5
+1, 8
+   v           v           v
+1, 2, 3, 4, 5, 6, 6, 7, 8, 9
+
+*/

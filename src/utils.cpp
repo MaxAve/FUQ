@@ -53,7 +53,10 @@ bool db::utils::is_greater(std::string a, std::string b)
 	}
 	else
 	{
-		return std::tolower(a[0]) > std::tolower(b[0]); // TODO
+		int i = 0;
+		while(i < (a.length() - 1) && i < (b.length() - 1) && std::tolower(a[i]) == std::tolower(b[i]))
+			i++;
+		return std::tolower(a[i]) > std::tolower(b[i]);
 	}
 }
 

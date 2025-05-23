@@ -203,9 +203,14 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			}
 			case db::script::TokenType::EXPRESSION:
 			{
+				// Edge case where negative numbers are parsed as expressions
+				if(fcall.children[i].children[0].value == "-" && fcall.children[i].children[1].value.length() == 0 && db::utils::is_number(fcall.children[i].children[2].value))
+				{
+					fc.params.push_back(fcall.children[i].children[0].value + fcall.children[i].children[2].value);
+				}
+
 				fc.params.push_back("__fuq_lambda");
 				this->lambdas.push_back({{}, fcall.children[i]});
-				//this->lambdas[this->lambdas.size() - 1].code.print();
 				break;
 			}
 		}
