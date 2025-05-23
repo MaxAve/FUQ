@@ -36,6 +36,8 @@ public:
 	void set(std::string col, std::string value);
 	void sort();
 	void insert(std::vector<std::string> row);
+	void colinsert(std::string col);
+	void colerase(std::string col);
 };
 
 class SubTable

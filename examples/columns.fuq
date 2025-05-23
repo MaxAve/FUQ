@@ -1,0 +1,5 @@
+load("examples/table.csv", table)
+colinsert(table, score) # Insert "score" column
+set(table, score, 0)
+colerase(table, "First Name") # Delete first name column
+printt(table)

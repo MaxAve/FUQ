@@ -58,6 +58,8 @@ const std::unordered_map<std::string, db::script::FunctionInfo> db::script::func
 	{"set", {db::script::FunctionID::SET, 3}},
 	{"filter", {db::script::FunctionID::FILTER, 2}},
 	{"insert", {db::script::FunctionID::INSERT, -1}},
+	{"colinsert", {db::script::FunctionID::COLINSERT, 2}},
+	{"colerase", {db::script::FunctionID::COLERASE, 2}},
 	{"erase", {db::script::FunctionID::ERASE, 1}},
 	{"sort", {db::script::FunctionID::SORT, 1}},
 	{"sortrule", {db::script::FunctionID::SORTRULE, 3}},

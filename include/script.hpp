@@ -65,6 +65,8 @@ enum FunctionID
     SET,
     FILTER,
     INSERT,
+    COLINSERT,
+    COLERASE,
     ERASE,
     SORT,
     SORTRULE,

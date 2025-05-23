@@ -522,6 +522,31 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			this->tables.at(fc.params[0])->insert(new_row);
 			break;
 		}
+		case db::script::FunctionID::COLINSERT:
+		{
+			if(this->tables.find(fc.params[0]) == this->tables.end())
+			{
+				std::cout << "ERROR: (While trying to insert new column into " << fc.params[0] << ") No table loaded\n";
+				break;
+			}
+			this->tables.at(fc.params[0])->colinsert(fc.params[1]);
+			break;
+		}
+		case db::script::FunctionID::COLERASE:
+		{
+			if(this->tables.find(fc.params[0]) == this->tables.end())
+			{
+				std::cout << "ERROR: (While trying to erase column from " << fc.params[0] << ") No table loaded\n";
+				break;
+			}
+			if(this->tables.at(fc.params[0])->get_col_index(fc.params[1]) == -1)
+			{
+				std::cout << "ERROR: (While trying to erase column from " << fc.params[0] << ") Column " << fc.params[1] << " does not exist\n";
+				break;
+			}
+			this->tables.at(fc.params[0])->colerase(fc.params[1]);
+			break;
+		}
 		case db::script::FunctionID::SORTRULE:
 		{
 			int index = this->tables.at(fc.params[0])->get_col_index(fc.params[1]);

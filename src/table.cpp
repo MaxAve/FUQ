@@ -343,10 +343,20 @@ void db::table::Table::insert(std::vector<std::string> row)
 	}
 }
 
-/*
-5
-1, 8
-   v           v           v
-1, 2, 3, 4, 5, 6, 6, 7, 8, 9
+void db::table::Table::colinsert(std::string col)
+{
+	this->table[0].push_back(col);
+	for(int i = 1; i < this->table.size(); i++)
+	{
+		this->table[i].push_back("");
+	}
+}
 
-*/
+void db::table::Table::colerase(std::string col)
+{
+	int index = this->get_col_index(col);
+	for(int i = 0; i < this->table.size(); i++)
+	{
+		this->table[i].erase(this->table[i].begin() + index);
+	}
+}
