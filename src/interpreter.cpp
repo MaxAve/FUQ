@@ -519,7 +519,8 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 			}
 			std::vector<std::string> new_row = fc.params;
 			new_row.erase(new_row.begin());
-			this->tables.at(fc.params[0])->insert(new_row);
+			new_row.erase(new_row.begin());
+			this->tables.at(fc.params[0])->insert(new_row, fc.params[1] != "0");
 			break;
 		}
 		case db::script::FunctionID::COLINSERT:
@@ -604,7 +605,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 						{
 							for(int i = 0; i < this->subtables.at(fc.params[1])->rows.size(); i++)
 							{
-								this->tables.at(fc.params[0])->insert(this->subtables.at(fc.params[1])->target->table[this->subtables.at(fc.params[1])->rows[i]]);
+								this->tables.at(fc.params[0])->insert(this->subtables.at(fc.params[1])->target->table[this->subtables.at(fc.params[1])->rows[i]], 1);
 							}
 						}
 					}
@@ -613,7 +614,7 @@ std::string db::interpreter::Context::call_function(const db::interpreter::AST &
 						const size_t s = this->tables.at(fc.params[1])->table.size(); // Prevents infinite loop
 						for(int i = 1; i < s; i++)
 						{
-							this->tables.at(fc.params[0])->insert(this->tables.at(fc.params[1])->table[i]);
+							this->tables.at(fc.params[0])->insert(this->tables.at(fc.params[1])->table[i], 1);
 						}
 					}
 				}

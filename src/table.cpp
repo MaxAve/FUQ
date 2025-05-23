@@ -277,11 +277,11 @@ void db::table::SubTable::sort()
 	std::cout << "TODO: SubTable::sort()\n";
 }
 
-void db::table::Table::insert(std::vector<std::string> row)
+void db::table::Table::insert(std::vector<std::string> row, bool sort)
 {
 	// Edge cases
 
-    if(this->table.size() <= 1)
+    if(this->table.size() <= 1 || !sort)
     {
         this->table.push_back(row);
         return;

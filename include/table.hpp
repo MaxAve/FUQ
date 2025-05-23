@@ -35,7 +35,7 @@ public:
 	void save(std::string path);
 	void set(std::string col, std::string value);
 	void sort();
-	void insert(std::vector<std::string> row);
+	void insert(std::vector<std::string> row, bool sort);
 	void colinsert(std::string col);
 	void colerase(std::string col);
 };

@@ -1,0 +1,9 @@
+load("examples/table.csv", table)
+
+# Sort by salary in ascending order
+sortrule(table, Salary, 1)
+sort(table)
+
+insert(table, 1, Max, Mustermann, 69420, IT, 42) # Note: the second parameter tells the interpreter to insert the row sorted; for appending at end, use 0
+
+printt(table)

@@ -11,7 +11,7 @@ std::unordered_map<std::string, db::help::FunctionInfo> db::help::function_info 
     {"filter", {"filter(table, condition)", "Iterates over every row in [table] and applies [condition] as a lambda. Rows that return 1 (true) will be added to a sub-table and returned."}},
     {"erase", {"erase(table)", "Erases every element in [table]. When a sub-table is passed as a parameter, every row present in the sub-table will be erased from the original table.\nExample:\n\terase(filter(table, [INDEX] % 2 == 0)) # This will erase every second row in the table"}},
     {"sortrule", {"sortrule(table, column, ascending)", "Sets rules for sorting [table]. The table will be sorted by values in [column] in ascending order if [ascending] == 1, otherwise descending."}},
-    {"insert", {"insert(table, values...)", "Inserts a new row into [table]. The row will be inserted according to rules defined via the last sortrule call."}},
+    {"insert", {"insert(table, sort, values...)", "Inserts a new row into [table]. The row will be inserted according to rules defined via the last sortrule call if [sort] is set to 1, otherwise it will be appended at the end."}},
     {"colinsert", {"colinsert(table, column)", "Inserts a new empty column [column] into [table]"}},
     {"colerase", {"colerase(table, column)", "Removes a column [column] from [table]"}},
     {"join", {"join(table1, table2, sort)", "Appends [table2] into [table1]. [table2] will be inserted sorted if [sort] is set to 1"}},
