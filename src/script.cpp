@@ -16,7 +16,7 @@ const std::unordered_map<std::string, db::script::OperationType> db::script::ope
 	{"||", OR},
 	{"&&", AND},
 	{"!", NOT},
-	{".", INDEX},
+	{"@", INDEX},
 	{"$", LTRUNC},
 	{":", SUBSTR},
 	{"(", FUNC_PARAM_START},
