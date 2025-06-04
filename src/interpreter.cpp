@@ -966,6 +966,24 @@ void db::interpreter::Context::run(std::string line)
 			this->call_function(ast);
 			break;
 		}
+		case db::script::EXPRESSION:
+		{
+			std::cout << "ERROR: Invalid syntax\n";
+			this->err = 1;
+			break;
+		}
+		case db::script::VALUE:
+		{
+			if(ast.value.length() > 0)
+			{
+				if(ast.value.length() == 1 && ast.value[0] == ' ')
+				{
+					break;
+				}
+				std::cout << "ERROR: Invalid syntax\n";
+			}
+			break;
+		}
 	}
 
 	// Clean up subtables
