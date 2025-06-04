@@ -916,7 +916,7 @@ std::string db::interpreter::Context::evaluate_lambda(db::interpreter::Lambda &l
 			int index = std::stoi(operand2);
 			if(index < 0 || index >= operand1.length())
 			{
-				std::cout << "ERROR: (While trying to evaluate " << operand1 << " # " << operand2 << ") Index out of range\n";
+				std::cout << "ERROR: (While trying to evaluate " << operand1 << " @ " << operand2 << ") Index out of range\n";
 				return "";
 			}
 			return std::string(1, operand1[index]);
